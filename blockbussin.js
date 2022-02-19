@@ -49,7 +49,7 @@ export class blockbussin extends Scene {
                 {ambient: .4, diffusivity: .6, color: hex_color("#992828")}),
             ring: new Material(new Ring_Shader()),
             plastic: new Material(new defs.Phong_Shader(),
-                {ambient: .4, diffusivity: .6, color: hex_color("#ffffff")}),
+                {ambient: .4, diffusivity: .6, color: hex_color("#ffffff"), }),
             // TODO:  Fill in as many additional material objects as needed in this key/value table.
             //        (Requirement 4)
         }
@@ -93,13 +93,19 @@ export class blockbussin extends Scene {
 
         const t = program_state.animation_time / 1000, dt = program_state.animation_delta_time / 1000;
         let model_transform = Mat4.identity();
-        // this.shapes.cube.draw(context, program_state, model_transform, this.materials.plastic);
+        this.shapes.cube.draw(context, program_state, model_transform, this.materials.plastic);
         this.shapes.outline.draw(context, program_state, model_transform, this.white,"LINES");
         model_transform = model_transform.times(Mat4.translation(0,2,0))
+        this.shapes.cube.draw(context, program_state, model_transform, this.materials.plastic);
+
         this.shapes.outline.draw(context, program_state, model_transform, this.white,"LINES");
         model_transform = model_transform.times(Mat4.translation(0,2,0))
+        this.shapes.cube.draw(context, program_state, model_transform, this.materials.plastic);
+
         this.shapes.outline.draw(context, program_state, model_transform, this.white,"LINES");
         model_transform = model_transform.times(Mat4.translation(2,0,0))
+        this.shapes.cube.draw(context, program_state, model_transform, this.materials.plastic);
+
         this.shapes.outline.draw(context, program_state, model_transform, this.white,"LINES");
 
 
