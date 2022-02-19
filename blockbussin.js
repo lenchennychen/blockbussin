@@ -17,16 +17,11 @@ class Cube_Outline extends Shape {
             this.white, this.white, this.white, this.white, this.white, this.white, this.white, this.white,
             this.white, this.white, this.white, this.white, this.white, this.white, this.white, this.white,
             this.white, this.white, this.white, this.white, this.white, this.white, this.white, this.white]
-        //  TODO (Requirement 5).
-        // When a set of lines is used in graphics, you should think of the list entries as
-        // broken down into pairs; each pair of vertices will be drawn as a line segment.
-        // Note: since the outline is rendered with Basic_shader, you need to redefine the position and color of each vertex
     }
 }
 
 export class blockbussin extends Scene {
     constructor() {
-        // constructor(): Scenes begin by populating initial values like the Shapes and Materials they'll need.
         super();
 
         // At the beginning of our program, load one of each of these shape definitions onto the GPU.
@@ -37,8 +32,6 @@ export class blockbussin extends Scene {
             circle: new defs.Regular_2D_Polygon(1, 15),
             cube: new defs.Cube(),
             outline: new Cube_Outline(),
-            // TODO:  Fill in as many additional shape instances as needed in this key/value table.
-            //        (Requirement 1)
         };
 
         // *** Materials
@@ -50,8 +43,6 @@ export class blockbussin extends Scene {
             ring: new Material(new Ring_Shader()),
             plastic: new Material(new defs.Phong_Shader(),
                 {ambient: .4, diffusivity: .6, color: hex_color("#ffffff"), }),
-            // TODO:  Fill in as many additional material objects as needed in this key/value table.
-            //        (Requirement 4)
         }
         this.white = new Material(new defs.Basic_Shader());
 
@@ -59,7 +50,7 @@ export class blockbussin extends Scene {
     }
 
     make_control_panel() {
-        // Draw the scene's buttons, setup their actions and keyboard shortcuts, and monitor live measurements.
+        // Buttons, can also probably make trigger for keyboard keys
         this.key_triggered_button("View solar system", ["Control", "0"], () => this.attached = () => null);
         this.new_line();
         this.key_triggered_button("Attach to planet 1", ["Control", "1"], () => this.attached = () => this.planet_1);
@@ -83,10 +74,6 @@ export class blockbussin extends Scene {
         program_state.projection_transform = Mat4.perspective(
             Math.PI / 4, context.width / context.height, .1, 1000);
 
-        // TODO: Create Planets (Requirement 1)
-        // this.shapes.[XXX].draw([XXX]) // <--example
-
-        // TODO: Lighting (Requirement 2)
         const light_position = vec4(0, 5, 5, 1);
         // The parameters of the Light are: position, color, size
         program_state.lights = [new Light(light_position, color(1, 1, 1, 1), 1000)];
