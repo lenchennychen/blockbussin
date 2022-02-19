@@ -1,1 +1,22 @@
+- block class
 
+--> scene stores the block types in array 
+	if block is dropped generates random number to generate random block
+	block enters scene
+	user uses keys to manipulate direction and position
+	if (user presses key)
+		drop block function
+	if (a floor is cleared)
+		translate everything down
+	if (gameover())
+		repeat
+	
+
+
+drop block function
+	if not occupied draw block
+
+
+
+game over function()
+- matrix that stores blocks already dropped has certain positions occupied --> return true
