@@ -58,6 +58,7 @@ export class blockbussin extends Scene {
         }
         this.white = new Material(new defs.Basic_Shader());
         this.current_block = 1;
+        // TODO: set correct camera location
         this.initial_camera_location = Mat4.look_at(vec3(0, 30, 60), vec3(0, -20, 0), vec3(0, 1, 0));
     }
 
@@ -103,8 +104,6 @@ export class blockbussin extends Scene {
         // The parameters of the Light are: position, color, size
         program_state.lights = [new Light(light_position, color(1, 1, 1, 1), 1000)];
 
-        // TODO: only call draw Block
-
         // only set new this.current_block if new block is needed
         if(this.current_block == null) {
             this.current_block = Math.floor(Math.random() * 5);
@@ -116,9 +115,6 @@ export class blockbussin extends Scene {
 
     drawBlock(context, program_state, n) {
         const cur_trans = this.transformations[n];
-
-        // draw initial block
-        // TODO: change starting point
         let model_transform = Mat4.identity();
 
         // translation
@@ -154,7 +150,7 @@ export class blockbussin extends Scene {
                     break;
             }
             
-            //break;
+
             this.shapes.outline.draw(context, program_state, model_transform, this.white,"LINES");
             this.shapes.cube.draw(context, program_state, model_transform, this.materials.plastic);
         }
