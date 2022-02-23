@@ -30,6 +30,12 @@ export class blockbussin extends Scene {
                                 ['R', 'R', 'T'],
                                 ['D', 'D', 'R']];
 
+        this.rotation_xaxis = 0;
+        this.rotation_yaxis = 0;
+        this.rotation_zaxis = 0;
+        this.translate_x = 0;
+        this.translate_z = 0;
+
         // At the beginning of our program, load one of each of these shape definitions onto the GPU.
         this.shapes = {
             torus: new defs.Torus(15, 15),
@@ -51,10 +57,8 @@ export class blockbussin extends Scene {
                 {ambient: .4, diffusivity: .6, color: hex_color("#ffffff"), }),
         }
         this.white = new Material(new defs.Basic_Shader());
-
-        this.current_block = null;
-
-        this.initial_camera_location = Mat4.look_at(vec3(0, 10, 20), vec3(0, 0, 0), vec3(0, 1, 0));
+        this.current_block = 1;
+        this.initial_camera_location = Mat4.look_at(vec3(0, 30, 60), vec3(0, -20, 0), vec3(0, 1, 0));
     }
 
     make_control_panel() {
@@ -64,10 +68,23 @@ export class blockbussin extends Scene {
         this.key_triggered_button("Attach to planet 1", ["Control", "1"], () => this.attached = () => this.planet_1);
         this.key_triggered_button("Attach to planet 2", ["Control", "2"], () => this.attached = () => this.planet_2);
         this.new_line();
-        this.key_triggered_button("Attach to planet 3", ["Control", "3"], () => this.attached = () => this.planet_3);
-        this.key_triggered_button("Attach to planet 4", ["Control", "4"], () => this.attached = () => this.planet_4);
+        this.key_triggered_button("Rotate Around x-axis", ["a"], () => this.rotation_xaxis += Math.PI/2);
+        this.key_triggered_button("Rotate Around y-axis", ["b"], () => this.rotation_yaxis += Math.PI/2);
+        this.key_triggered_button("Rotate Around z-axis", ["c"], () => this.rotation_zaxis += Math.PI/2);
         this.new_line();
-        this.key_triggered_button("Drop Block", [" "], () => this.current_block = null);
+        this.key_triggered_button("Translate right", ["j"], () => this.translate_x -= 2);
+        this.key_triggered_button("Translate left", ["k"], () => this.translate_x += 2);
+        // forward = away
+        this.key_triggered_button("Translate forward", ["i"], () => this.translate_z -= 2);
+        this.key_triggered_button("Translate backward", ["m"], () => this.translate_z += 2);
+        this.key_triggered_button("Drop Block", [" "], () => {
+            this.current_block = null;
+            this.rotation_xaxis = 0;
+            this.rotation_yaxis = 0;
+            this.rotation_zaxis = 0;
+            this.translate_x = 0;
+            this.translate_z = 0;
+        });
     }
 
     display(context, program_state) {
@@ -103,8 +120,19 @@ export class blockbussin extends Scene {
         // draw initial block
         // TODO: change starting point
         let model_transform = Mat4.identity();
+
+        // translation
+        model_transform = model_transform.times(Mat4.translation(this.translate_x, 0, this.translate_z));
+
+        // rotation
+        model_transform = model_transform.times(Mat4.translation(-1, 1, 0))
+        .times(Mat4.rotation(this.rotation_xaxis, 1, 0, 0))
+        .times(Mat4.rotation(this.rotation_yaxis, 0, 1, 0))
+        .times(Mat4.rotation(this.rotation_zaxis, 0, 0, 1))
+        .times(Mat4.translation(1, -1, 0));
+        
         this.shapes.cube.draw(context, program_state, model_transform, this.materials.plastic);
-        this.shapes.outline.draw(context, program_state, model_transform, this.white,"LINES");
+        //this.shapes.outline.draw(context, program_state, model_transform, this.white,"LINES");
 
         for (const element of cur_trans) {
             switch (element) {
@@ -125,6 +153,8 @@ export class blockbussin extends Scene {
                 default:
                     break;
             }
+            
+            //break;
             this.shapes.outline.draw(context, program_state, model_transform, this.white,"LINES");
             this.shapes.cube.draw(context, program_state, model_transform, this.materials.plastic);
         }
