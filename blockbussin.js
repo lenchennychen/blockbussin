@@ -20,6 +20,41 @@ class Cube_Outline extends Shape {
     }
 }
 
+class Square_Outline extends Shape {
+    constructor() {
+        super("position", "color");
+        this.indices = false;
+        this.white = hex_color("#FFFFFF");
+        this.arrays.position = Vector3.cast(
+            [-1, -1, -1], [1, -1, -1], [-1, -1, 1], [1, -1, 1], [-1, -1, -1], [-1, -1, 1], [1, -1, -1], [1, -1, 1])
+        this.arrays.color = [
+            this.white, this.white, this.white, this.white, this.white, this.white, this.white, this.white]
+    }
+}
+class Square_Outline2 extends Shape {
+    constructor() {
+        super("position", "color");
+        this.indices = false;
+        this.white = hex_color("#FFFFFF");
+        this.arrays.position = Vector3.cast(
+            [-1, -1, -1], [-1, 1, -1], [-1, -1, 1], [-1, 1, 1], [-1, -1, -1], [-1, -1, 1],[-1, 1, -1],[-1, 1, 1],)
+        this.arrays.color = [
+            this.white, this.white, this.white, this.white, this.white, this.white, this.white, this.white]
+    }
+}
+class Square_Outline3 extends Shape {
+    constructor() {
+        super("position", "color");
+        this.indices = false;
+        this.white = hex_color("#FFFFFF");
+        this.arrays.position = Vector3.cast(
+            [-1, -1, -1], [-1, 1, -1],[1, -1, -1], [1, 1, -1], [-1, -1, -1] ,[1, -1, -1],[-1, 1, -1],[1, 1, -1])
+        this.arrays.color = [
+            this.white, this.white, this.white, this.white, this.white, this.white, this.white, this.white]
+    }
+
+}
+
 export class blockbussin extends Scene {
     constructor() {
         super();
@@ -43,7 +78,10 @@ export class blockbussin extends Scene {
             sphere: new defs.Subdivision_Sphere(4),
             circle: new defs.Regular_2D_Polygon(1, 15),
             cube: new defs.Cube(),
-            outline: new Cube_Outline(),
+            cubeoutline: new Cube_Outline(),
+            squareoutline: new Square_Outline(),
+            squareoutline2: new Square_Outline2(),
+            squareoutline3: new Square_Outline3(),
         };
 
         // *** Materials
@@ -109,6 +147,7 @@ export class blockbussin extends Scene {
             this.current_block = Math.floor(Math.random() * 5);
         }
         this.drawBlock(context, program_state, this.current_block);
+        this.drawgamefield(context,program_state);
         const t = program_state.animation_time / 1000, dt = program_state.animation_delta_time / 1000;
 
     }
@@ -151,9 +190,59 @@ export class blockbussin extends Scene {
             }
             
 
-            this.shapes.outline.draw(context, program_state, model_transform, this.white,"LINES");
+            this.shapes.cubeoutline.draw(context, program_state, model_transform, this.white,"LINES");
             this.shapes.cube.draw(context, program_state, model_transform, this.materials.plastic);
         }
+    }
+
+    drawgamefield(context, program_state){
+        let model_transform = Mat4.identity();
+        model_transform = model_transform.times(Mat4.translation(-5, -10, -5));
+        // this.shapes.cube.draw(context, program_state, model_transform, this.materials.plastic);
+        for (let i = 0; i < 10; i++){
+            model_transform = model_transform.times(Mat4.translation(2,0,0));
+            for (let j = 0; j < 10; j++){
+                model_transform = model_transform.times(Mat4.translation(0,0,2));
+                this.shapes.squareoutline.draw(context, program_state, model_transform, this.white,"LINES");
+            }
+            model_transform = model_transform.times(Mat4.translation(0,0,-20));
+        }
+        model_transform = model_transform.times(Mat4.translation(2,-2,0));
+        for (let i = 0; i < 10; i++){
+            model_transform = model_transform.times(Mat4.translation(0,0,2));
+            for (let j = 0; j < 10; j++){
+                model_transform = model_transform.times(Mat4.translation(0,2,0));
+                this.shapes.squareoutline2.draw(context, program_state, model_transform, this.white,"LINES");
+            }
+            model_transform = model_transform.times(Mat4.translation(0,-20,0));
+        }
+        model_transform = model_transform.times(Mat4.translation(-20,0,-20));
+        for (let i = 0; i < 10; i++){
+            model_transform = model_transform.times(Mat4.translation(0,0,2));
+            for (let j = 0; j < 10; j++){
+                model_transform = model_transform.times(Mat4.translation(0,2,0));
+                this.shapes.squareoutline2.draw(context, program_state, model_transform, this.white,"LINES");
+            }
+            model_transform = model_transform.times(Mat4.translation(0,-20,0));
+        }
+        model_transform = model_transform.times(Mat4.translation(-2,0,2));
+        for (let i = 0; i < 10; i++){
+            model_transform = model_transform.times(Mat4.translation(0,2,0));
+            for (let j = 0; j < 10; j++){
+                model_transform = model_transform.times(Mat4.translation(2,0,0));
+                this.shapes.squareoutline3.draw(context, program_state, model_transform, this.white,"LINES");
+            }
+            model_transform = model_transform.times(Mat4.translation(-20,0,0));
+        }
+        model_transform = model_transform.times(Mat4.translation(0,-20,-20));
+        for (let i = 0; i < 10; i++){
+            model_transform = model_transform.times(Mat4.translation(0,2,0));
+            for (let j = 0; j < 10; j++){
+                model_transform = model_transform.times(Mat4.translation(2,0,0));
+                this.shapes.squareoutline3.draw(context, program_state, model_transform, this.white,"LINES");
+            }
+            model_transform = model_transform.times(Mat4.translation(-20,0,0));
+        }        
     }
 }
 
