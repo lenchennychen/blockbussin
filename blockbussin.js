@@ -59,11 +59,11 @@ export class blockbussin extends Scene {
     constructor() {
         super();
 
-        this.transformations = [['R', 'R', 'R'],
-                                ['D', 'R', 'D'],
-                                ['R', 'D', 'L'],
-                                ['R', 'R', 'T'],
-                                ['D', 'D', 'R']];
+        this.transformations = [['N', 'R', 'R', 'R'],
+                                ['N', 'D', 'R', 'D'],
+                                ['N', 'R', 'D', 'L'],
+                                ['N', 'R', 'R', 'T'],
+                                ['N', 'D', 'D', 'R']];
 
         this.rotation_xaxis = 0;
         this.rotation_yaxis = 0;
@@ -102,10 +102,10 @@ export class blockbussin extends Scene {
 
     make_control_panel() {
         // Buttons, can also probably make trigger for keyboard keys
-        this.key_triggered_button("View solar system", ["Control", "0"], () => this.attached = () => null);
-        this.new_line();
-        this.key_triggered_button("Attach to planet 1", ["Control", "1"], () => this.attached = () => this.planet_1);
-        this.key_triggered_button("Attach to planet 2", ["Control", "2"], () => this.attached = () => this.planet_2);
+        // this.key_triggered_button("View solar system", ["Control", "0"], () => this.attached = () => null);
+        // this.new_line();
+        // this.key_triggered_button("Attach to planet 1", ["Control", "1"], () => this.attached = () => this.planet_1);
+        // this.key_triggered_button("Attach to planet 2", ["Control", "2"], () => this.attached = () => this.planet_2);
         this.new_line();
         this.key_triggered_button("Rotate Around x-axis", ["a"], () => this.rotation_xaxis += Math.PI/2);
         this.key_triggered_button("Rotate Around y-axis", ["b"], () => this.rotation_yaxis += Math.PI/2);
@@ -130,7 +130,7 @@ export class blockbussin extends Scene {
         // display():  Called once per frame of animation.
         // Setup -- This part sets up the scene's overall camera matrix, projection matrix, and lights:
         if (!context.scratchpad.controls) {
-            //this.children.push(context.scratchpad.controls = new defs.Movement_Controls());
+            this.children.push(context.scratchpad.controls = new defs.Movement_Controls());
             // Define the global camera and projection matrices, which are stored in program_state.
             program_state.set_camera(this.initial_camera_location);
         }
@@ -166,8 +166,8 @@ export class blockbussin extends Scene {
         .times(Mat4.rotation(this.rotation_zaxis, 0, 0, 1))
         .times(Mat4.translation(1, -1, 0));
         
-        this.shapes.cube.draw(context, program_state, model_transform, this.materials.plastic);
-        //this.shapes.outline.draw(context, program_state, model_transform, this.white,"LINES");
+        // this.shapes.cube.draw(context, program_state, model_transform, this.materials.plastic);
+        // this.shapes.outline.draw(context, program_state, model_transform, this.white,"LINES");
 
         for (const element of cur_trans) {
             switch (element) {
@@ -197,7 +197,8 @@ export class blockbussin extends Scene {
 
     drawgamefield(context, program_state){
         let model_transform = Mat4.identity();
-        model_transform = model_transform.times(Mat4.translation(-5, -10, -5));
+        
+        model_transform = model_transform.times(Mat4.translation(-6, -10, -6));
         // this.shapes.cube.draw(context, program_state, model_transform, this.materials.plastic);
         for (let i = 0; i < 10; i++){
             model_transform = model_transform.times(Mat4.translation(2,0,0));
