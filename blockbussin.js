@@ -130,7 +130,8 @@ export class blockbussin extends Scene {
         // display():  Called once per frame of animation.
         // Setup -- This part sets up the scene's overall camera matrix, projection matrix, and lights:
         if (!context.scratchpad.controls) {
-            this.children.push(context.scratchpad.controls = new defs.Movement_Controls());
+            // don't uncomment camera controls until key overlap issue is fixed (TODO)
+            // this.children.push(context.scratchpad.controls = new defs.Movement_Controls());
             // Define the global camera and projection matrices, which are stored in program_state.
             program_state.set_camera(this.initial_camera_location);
         }
@@ -196,6 +197,8 @@ export class blockbussin extends Scene {
     }
 
     drawgamefield(context, program_state){
+        // TODO: get rid of one side, center on initial block 
+
         let model_transform = Mat4.identity();
         
         model_transform = model_transform.times(Mat4.translation(-6, -10, -6));
