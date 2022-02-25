@@ -97,7 +97,7 @@ export class blockbussin extends Scene {
         this.white = new Material(new defs.Basic_Shader());
         this.current_block = 1;
         // TODO: set correct camera location
-        this.initial_camera_location = Mat4.look_at(vec3(0, 30, 60), vec3(0, -20, 0), vec3(0, 1, 0));
+        this.initial_camera_location = Mat4.look_at(vec3(-20, 40, 80), vec3(10, 0, 0), vec3(0, 1, 0));
     }
 
     make_control_panel() {
@@ -131,7 +131,7 @@ export class blockbussin extends Scene {
         // Setup -- This part sets up the scene's overall camera matrix, projection matrix, and lights:
         if (!context.scratchpad.controls) {
             // don't uncomment camera controls until key overlap issue is fixed (TODO)
-            // this.children.push(context.scratchpad.controls = new defs.Movement_Controls());
+            this.children.push(context.scratchpad.controls = new defs.Movement_Controls());
             // Define the global camera and projection matrices, which are stored in program_state.
             program_state.set_camera(this.initial_camera_location);
         }
@@ -238,15 +238,15 @@ export class blockbussin extends Scene {
             }
             model_transform = model_transform.times(Mat4.translation(-20,0,0));
         }
-        model_transform = model_transform.times(Mat4.translation(0,-20,-20));
-        for (let i = 0; i < 10; i++){
-            model_transform = model_transform.times(Mat4.translation(0,2,0));
-            for (let j = 0; j < 10; j++){
-                model_transform = model_transform.times(Mat4.translation(2,0,0));
-                this.shapes.squareoutline3.draw(context, program_state, model_transform, this.white,"LINES");
-            }
-            model_transform = model_transform.times(Mat4.translation(-20,0,0));
-        }        
+        // model_transform = model_transform.times(Mat4.translation(0,-20,-20));
+        // for (let i = 0; i < 10; i++){
+        //     model_transform = model_transform.times(Mat4.translation(0,2,0));
+        //     for (let j = 0; j < 10; j++){
+        //         model_transform = model_transform.times(Mat4.translation(2,0,0));
+        //         this.shapes.squareoutline3.draw(context, program_state, model_transform, this.white,"LINES");
+        //     }
+        //     model_transform = model_transform.times(Mat4.translation(-20,0,0));
+        // }        
     }
 }
 
