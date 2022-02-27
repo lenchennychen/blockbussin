@@ -225,7 +225,7 @@ export class blockbussin extends Scene {
             model_transform = model_transform.times(Mat4.translation(0,0,2));
             for (let j = 0; j < 10; j++){
                 model_transform = model_transform.times(Mat4.translation(0,2,0));
-                this.shapes.squareoutline2.draw(context, program_state, model_transform, this.white,"LINES");
+                // this.shapes.squareoutline2.draw(context, program_state, model_transform, this.white,"LINES");
             }
             model_transform = model_transform.times(Mat4.translation(0,-20,0));
         }
@@ -234,19 +234,19 @@ export class blockbussin extends Scene {
             model_transform = model_transform.times(Mat4.translation(0,2,0));
             for (let j = 0; j < 10; j++){
                 model_transform = model_transform.times(Mat4.translation(2,0,0));
-                this.shapes.squareoutline3.draw(context, program_state, model_transform, this.white,"LINES");
+                // this.shapes.squareoutline3.draw(context, program_state, model_transform, this.white,"LINES");
             }
             model_transform = model_transform.times(Mat4.translation(-20,0,0));
         }
-        // model_transform = model_transform.times(Mat4.translation(0,-20,-20));
-        // for (let i = 0; i < 10; i++){
-        //     model_transform = model_transform.times(Mat4.translation(0,2,0));
-        //     for (let j = 0; j < 10; j++){
-        //         model_transform = model_transform.times(Mat4.translation(2,0,0));
-        //         this.shapes.squareoutline3.draw(context, program_state, model_transform, this.white,"LINES");
-        //     }
-        //     model_transform = model_transform.times(Mat4.translation(-20,0,0));
-        // }        
+        model_transform = model_transform.times(Mat4.translation(0,-20,-20));
+        for (let i = 0; i < 10; i++){
+            model_transform = model_transform.times(Mat4.translation(0,2,0));
+            for (let j = 0; j < 10; j++){
+                model_transform = model_transform.times(Mat4.translation(2,0,0));
+                this.shapes.squareoutline3.draw(context, program_state, model_transform, this.white,"LINES");
+            }
+            model_transform = model_transform.times(Mat4.translation(-20,0,0));
+        }        
     }
 }
 
