@@ -16,7 +16,8 @@ for each cube in tetris block
 			final_transf = new_transf;
 	
 translate block by final_transf in y direction
-push 0's and 1's appropriately to queues
+push 0's and 1's appropriately to queues --> idea: just use final coordinates of block
+											--> we then need to make edge of grid at (0,0,0) to make it easier
 store block data (final transformation matrix, color) somewhere
 
 
