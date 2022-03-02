@@ -1,22 +1,22 @@
-- block class
+How se0ngbin thinks we should do stuff:
 
---> scene stores the block types in array 
-	if block is dropped generates random number to generate random block
-	block enters scene
-	user uses keys to manipulate direction and position
-	if (user presses key)
-		drop block function
-	if (a floor is cleared)
-		translate everything down
-	if (gameover())
-		repeat
+10x10 grid, so we need 100 queues --> https://www.javascripttutorial.net/javascript-queue/
+Game over when length of one queue exceeds a certain number
+
+Store queues in 10x10 array named occupied[][]
+
+let final_transf = 1000000; // just some huge number
+for each cube in tetris block
+	if not on "bottom" <=> there is cube w same x,z coordinates but lower y coordinate
+		break;
+	else
+		new_y = length of occupied[x][z]
+		new_transf = distance of cube's y to new_y
+		if (final_transf < new_transf)
+			final_transf = new_transf;
 	
+translate block by final_transf in y direction
+push 0's and 1's appropriately to queues
+store block data (final transformation matrix, color) somewhere
 
 
-drop block function
-	if not occupied draw block
-
-
-
-game over function()
-- matrix that stores blocks already dropped has certain positions occupied --> return true
