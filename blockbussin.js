@@ -59,17 +59,18 @@ export class blockbussin extends Scene {
     constructor() {
         super();
 
-        this.transformations = [['N', 'R', 'R', 'R'],
+        this.transformations = [['N', 'D', 'D', 'D'],
                                 ['N', 'D', 'R', 'D'],
                                 ['N', 'R', 'D', 'L'],
                                 ['N', 'R', 'R', 'T'],
                                 ['N', 'D', 'D', 'R']];
 
-        this.rotation_xaxis = 0;
-        this.rotation_yaxis = 0;
-        this.rotation_zaxis = 0;
-        this.translate_x = 0;
-        this.translate_z = 0;
+        this.rotation_x = 0;
+        this.rotation_y = 0;
+        this.rotation_z = 0;
+        this.translate_x = 6;
+        this.translate_y = 20;
+        this.translate_z = 4;
 
         // At the beginning of our program, load one of each of these shape definitions onto the GPU.
         this.shapes = {
@@ -95,9 +96,9 @@ export class blockbussin extends Scene {
                 {ambient: .4, diffusivity: .6, color: hex_color("#ffffff"), }),
         }
         this.white = new Material(new defs.Basic_Shader());
-        this.current_block = 1;
+        this.current_block = 0;
         // TODO: set correct camera location
-        this.initial_camera_location = Mat4.look_at(vec3(-20, 40, 80), vec3(10, 0, 0), vec3(0, 1, 0));
+        this.initial_camera_location = Mat4.look_at(vec3(-35, 25, 45), vec3(10, 0, 0), vec3(0, 1, 0));
     }
 
     make_control_panel() {
@@ -107,22 +108,23 @@ export class blockbussin extends Scene {
         // this.key_triggered_button("Attach to planet 1", ["Control", "1"], () => this.attached = () => this.planet_1);
         // this.key_triggered_button("Attach to planet 2", ["Control", "2"], () => this.attached = () => this.planet_2);
         this.new_line();
-        this.key_triggered_button("Rotate Around x-axis", ["a"], () => this.rotation_xaxis += Math.PI/2);
-        this.key_triggered_button("Rotate Around y-axis", ["b"], () => this.rotation_yaxis += Math.PI/2);
-        this.key_triggered_button("Rotate Around z-axis", ["c"], () => this.rotation_zaxis += Math.PI/2);
+        this.key_triggered_button("Rotate Around x-axis", ["x"], () => {if (this.checkMove('x')) {this.rotation_x += Math.PI/2}});
+        this.key_triggered_button("Rotate Around y-axis", ["y"], () => {if (this.checkMove('y')) {this.rotation_y += Math.PI/2}});
+        this.key_triggered_button("Rotate Around z-axis", ["z"], () => {if (this.checkMove('z')) {this.rotation_z += Math.PI/2}});
         this.new_line();
-        this.key_triggered_button("Translate right", ["j"], () => this.translate_x -= 2);
-        this.key_triggered_button("Translate left", ["k"], () => this.translate_x += 2);
+        this.key_triggered_button("Translate right", ["d"], () => {if (this.checkMove('d')) {this.translate_x += 2}});
+        this.key_triggered_button("Translate left", ["a"], () => {if (this.checkMove('a')) {this.translate_x -= 2}});
         // forward = away
-        this.key_triggered_button("Translate forward", ["i"], () => this.translate_z -= 2);
-        this.key_triggered_button("Translate backward", ["m"], () => this.translate_z += 2);
+        this.key_triggered_button("Translate forward", ["w"], () => {if (this.checkMove('w')) {this.translate_z -= 2}});
+        this.key_triggered_button("Translate backward", ["s"], () => {if (this.checkMove('s')) {this.translate_z += 2}});
         this.key_triggered_button("Drop Block", [" "], () => {
             this.current_block = null;
-            this.rotation_xaxis = 0;
-            this.rotation_yaxis = 0;
-            this.rotation_zaxis = 0;
-            this.translate_x = 0;
-            this.translate_z = 0;
+            this.rotation_x = 0;
+            this.rotation_y = 0;
+            this.rotation_z = 0;
+            this.translate_x = 6;
+            this.translate_y = 20;
+            this.translate_z = 4;
         });
     }
 
@@ -131,7 +133,7 @@ export class blockbussin extends Scene {
         // Setup -- This part sets up the scene's overall camera matrix, projection matrix, and lights:
         if (!context.scratchpad.controls) {
             // don't uncomment camera controls until key overlap issue is fixed (TODO)
-            this.children.push(context.scratchpad.controls = new defs.Movement_Controls());
+            // this.children.push(context.scratchpad.controls = new defs.Movement_Controls());
             // Define the global camera and projection matrices, which are stored in program_state.
             program_state.set_camera(this.initial_camera_location);
         }
@@ -142,33 +144,34 @@ export class blockbussin extends Scene {
         const light_position = vec4(0, 5, 5, 1);
         // The parameters of the Light are: position, color, size
         program_state.lights = [new Light(light_position, color(1, 1, 1, 1), 1000)];
+        this.drawgamefield(context,program_state);
 
         // only set new this.current_block if new block is needed
         if(this.current_block == null) {
             this.current_block = Math.floor(Math.random() * 5);
         }
-        this.drawBlock(context, program_state, this.current_block);
-        this.drawgamefield(context,program_state);
-        const t = program_state.animation_time / 1000, dt = program_state.animation_delta_time / 1000;
 
+        let transforms = this.createBlock(this.current_block, this.translate_x, this.translate_y, this.translate_z, this.rotation_x, this.rotation_y, this.rotation_z);
+        for(const model_transform of transforms) {
+            this.shapes.cubeoutline.draw(context, program_state, model_transform, this.white,"LINES");
+            this.shapes.cube.draw(context, program_state, model_transform, this.materials.plastic);
+        }
+        // const t = program_state.animation_time / 1000, dt = program_state.animation_delta_time / 1000;
     }
 
-    drawBlock(context, program_state, n) {
-        const cur_trans = this.transformations[n];
+    createBlock(shape_index, tx, ty, tz, rx, ry, rz) {
+        const cur_trans = this.transformations[shape_index];
+        let transforms = [];
         let model_transform = Mat4.identity();
 
         // translation
-        model_transform = model_transform.times(Mat4.translation(this.translate_x, 0, this.translate_z));
+        model_transform = model_transform.times(Mat4.translation(tx, ty, tz));
 
         // rotation
-        model_transform = model_transform.times(Mat4.translation(-1, 1, 0))
-        .times(Mat4.rotation(this.rotation_xaxis, 1, 0, 0))
-        .times(Mat4.rotation(this.rotation_yaxis, 0, 1, 0))
-        .times(Mat4.rotation(this.rotation_zaxis, 0, 0, 1))
-        .times(Mat4.translation(1, -1, 0));
-        
-        // this.shapes.cube.draw(context, program_state, model_transform, this.materials.plastic);
-        // this.shapes.outline.draw(context, program_state, model_transform, this.white,"LINES");
+        model_transform = model_transform
+        .times(Mat4.rotation(rx, 1, 0, 0))
+        .times(Mat4.rotation(ry, 0, 1, 0))
+        .times(Mat4.rotation(rz, 0, 0, 1));
 
         for (const element of cur_trans) {
             switch (element) {
@@ -189,11 +192,48 @@ export class blockbussin extends Scene {
                 default:
                     break;
             }
-            
 
-            this.shapes.cubeoutline.draw(context, program_state, model_transform, this.white,"LINES");
-            this.shapes.cube.draw(context, program_state, model_transform, this.materials.plastic);
+            transforms.push(model_transform);
         }
+
+        return transforms;
+    }
+
+    checkMove(move) {
+        let transforms;
+        switch (move) {
+            case 'x':
+                transforms = this.createBlock(this.current_block, this.translate_x, this.translate_y, this.translate_z, this.rotation_x+Math.PI/2, this.rotation_y, this.rotation_z);
+                break;
+            case 'y':
+                transforms = this.createBlock(this.current_block, this.translate_x, this.translate_y, this.translate_z, this.rotation_x, this.rotation_y+Math.PI/2, this.rotation_z);
+                break;
+            case 'z':
+                transforms = this.createBlock(this.current_block, this.translate_x, this.translate_y, this.translate_z, this.rotation_x, this.rotation_y, this.rotation_z+Math.PI/2);
+                break;
+            case 'w':
+                transforms = this.createBlock(this.current_block, this.translate_x, this.translate_y, this.translate_z-2, this.rotation_x, this.rotation_y, this.rotation_z);
+                break;
+            case 'a':
+                transforms = this.createBlock(this.current_block, this.translate_x-2, this.translate_y, this.translate_z, this.rotation_x, this.rotation_y, this.rotation_z);
+                break;
+            case 's':
+                transforms = this.createBlock(this.current_block, this.translate_x, this.translate_y, this.translate_z+2, this.rotation_x, this.rotation_y, this.rotation_z);
+                break;
+            case 'd':
+                transforms = this.createBlock(this.current_block, this.translate_x+2, this.translate_y, this.translate_z, this.rotation_x, this.rotation_y, this.rotation_z);
+                break;
+            default:
+                break;
+        }
+
+        for(const model_transform of transforms) {
+            let m = Matrix.flatten_2D_to_1D(model_transform);
+            if(m[3]>14 || m[11]<-4) {
+                return false;
+            }
+        }
+        return true;
     }
 
     drawgamefield(context, program_state){
