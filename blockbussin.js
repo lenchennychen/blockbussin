@@ -1,8 +1,13 @@
-import {defs, tiny} from './examples/common.js';
+import { defs, tiny } from './examples/common.js';
 
 const {
     Vector, Vector3, vec, vec3, vec4, color, hex_color, Shader, Matrix, Mat4, Light, Shape, Material, Scene, Cube
 } = tiny;
+
+const INIT_X = 6;
+const INIT_Y = 10;
+const INIT_Z = 4;
+
 
 class Cube_Outline extends Shape {
     constructor() {
@@ -37,7 +42,7 @@ class Square_Outline2 extends Shape {
         this.indices = false;
         this.white = hex_color("#FFFFFF");
         this.arrays.position = Vector3.cast(
-            [-1, -1, -1], [-1, 1, -1], [-1, -1, 1], [-1, 1, 1], [-1, -1, -1], [-1, -1, 1],[-1, 1, -1],[-1, 1, 1],)
+            [-1, -1, -1], [-1, 1, -1], [-1, -1, 1], [-1, 1, 1], [-1, -1, -1], [-1, -1, 1], [-1, 1, -1], [-1, 1, 1])
         this.arrays.color = [
             this.white, this.white, this.white, this.white, this.white, this.white, this.white, this.white]
     }
@@ -48,7 +53,7 @@ class Square_Outline3 extends Shape {
         this.indices = false;
         this.white = hex_color("#FFFFFF");
         this.arrays.position = Vector3.cast(
-            [-1, -1, -1], [-1, 1, -1],[1, -1, -1], [1, 1, -1], [-1, -1, -1] ,[1, -1, -1],[-1, 1, -1],[1, 1, -1])
+            [-1, -1, -1], [-1, 1, -1], [1, -1, -1], [1, 1, -1], [-1, -1, -1], [1, -1, -1], [-1, 1, -1], [1, 1, -1])
         this.arrays.color = [
             this.white, this.white, this.white, this.white, this.white, this.white, this.white, this.white]
     }
@@ -60,17 +65,10 @@ export class blockbussin extends Scene {
         super();
 
         this.transformations = [['N', 'D', 'D', 'D'],
-                                ['N', 'D', 'R', 'D'],
-                                ['N', 'R', 'D', 'L'],
-                                ['N', 'R', 'R', 'T'],
-                                ['N', 'D', 'D', 'R']];
-
-        this.rotation_x = 0;
-        this.rotation_y = 0;
-        this.rotation_z = 0;
-        this.translate_x = 6;
-        this.translate_y = 20;
-        this.translate_z = 4;
+        ['N', 'D', 'R', 'D'],
+        ['N', 'R', 'D', 'L'],
+        ['N', 'R', 'R', 'T'],
+        ['N', 'D', 'D', 'R']];
 
         // At the beginning of our program, load one of each of these shape definitions onto the GPU.
         this.shapes = {
@@ -88,43 +86,41 @@ export class blockbussin extends Scene {
         // *** Materials
         this.materials = {
             test: new Material(new defs.Phong_Shader(),
-                {ambient: .4, diffusivity: .6, color: hex_color("#ffffff")}),
+                { ambient: .4, diffusivity: .6, color: hex_color("#ff10f0") }),
             test2: new Material(new Gouraud_Shader(),
-                {ambient: .4, diffusivity: .6, color: hex_color("#992828")}),
+                { ambient: .4, diffusivity: .6, color: hex_color("#992828") }),
             ring: new Material(new Ring_Shader()),
             plastic: new Material(new defs.Phong_Shader(),
-                {ambient: .4, diffusivity: .6, color: hex_color("#ffffff"), }),
+                { ambient: .4, diffusivity: .6, color: hex_color("#ffffff"), }),
         }
         this.white = new Material(new defs.Basic_Shader());
-        this.current_block = 0;
+
+        // state stores information about the current block type and transformations
+        this.current_block = 1;
+        this.current_rotations = Mat4.identity();
+        this.current_translations = Mat4.translation(INIT_X, INIT_Y, INIT_Z);
+        this.current_transform = Mat4.translation(INIT_X, INIT_Y, INIT_Z);
+
         // TODO: set correct camera location
-        this.initial_camera_location = Mat4.look_at(vec3(-35, 25, 45), vec3(10, 0, 0), vec3(0, 1, 0));
+        this.initial_camera_location = Mat4.look_at(vec3(-20, 40, 80), vec3(10, 0, 0), vec3(0, 1, 0));
     }
 
     make_control_panel() {
         // Buttons, can also probably make trigger for keyboard keys
-        // this.key_triggered_button("View solar system", ["Control", "0"], () => this.attached = () => null);
-        // this.new_line();
-        // this.key_triggered_button("Attach to planet 1", ["Control", "1"], () => this.attached = () => this.planet_1);
-        // this.key_triggered_button("Attach to planet 2", ["Control", "2"], () => this.attached = () => this.planet_2);
         this.new_line();
-        this.key_triggered_button("Rotate Around x-axis", ["x"], () => {if (this.checkMove('x')) {this.rotation_x += Math.PI/2}});
-        this.key_triggered_button("Rotate Around y-axis", ["y"], () => {if (this.checkMove('y')) {this.rotation_y += Math.PI/2}});
-        this.key_triggered_button("Rotate Around z-axis", ["z"], () => {if (this.checkMove('z')) {this.rotation_z += Math.PI/2}});
-        this.new_line();
-        this.key_triggered_button("Translate right", ["d"], () => {if (this.checkMove('d')) {this.translate_x += 2}});
-        this.key_triggered_button("Translate left", ["a"], () => {if (this.checkMove('a')) {this.translate_x -= 2}});
+        this.key_triggered_button("Rotate Around x-axis", ["a"], () => this.checkMove('a'));
+        this.key_triggered_button("Rotate Around y-axis", ["s"], () => this.checkMove('s'));
+        this.key_triggered_button("Rotate Around z-axis", ["d"], () => this.checkMove('d'));
+        this.key_triggered_button("Translate right", ["l"], () => this.checkMove('l'));
+        this.key_triggered_button("Translate left", ["j"], () => this.checkMove('j'));
         // forward = away
-        this.key_triggered_button("Translate forward", ["w"], () => {if (this.checkMove('w')) {this.translate_z -= 2}});
-        this.key_triggered_button("Translate backward", ["s"], () => {if (this.checkMove('s')) {this.translate_z += 2}});
+        this.key_triggered_button("Translate forward", ["i"], () => this.checkMove('i'));
+        this.key_triggered_button("Translate backward", ["k"], () => this.checkMove('k'));
         this.key_triggered_button("Drop Block", [" "], () => {
             this.current_block = null;
-            this.rotation_x = 0;
-            this.rotation_y = 0;
-            this.rotation_z = 0;
-            this.translate_x = 6;
-            this.translate_y = 20;
-            this.translate_z = 4;
+            this.current_rotations = Mat4.identity();
+            this.current_translations = Mat4.translation(INIT_X, INIT_Y, INIT_Z);
+            this.current_transform = Mat4.translation(INIT_X, INIT_Y, INIT_Z);
         });
     }
 
@@ -144,149 +140,154 @@ export class blockbussin extends Scene {
         const light_position = vec4(0, 5, 5, 1);
         // The parameters of the Light are: position, color, size
         program_state.lights = [new Light(light_position, color(1, 1, 1, 1), 1000)];
-        this.drawgamefield(context,program_state);
 
         // only set new this.current_block if new block is needed
-        if(this.current_block == null) {
+        if (this.current_block == null) {
             this.current_block = Math.floor(Math.random() * 5);
         }
 
-        let transforms = this.createBlock(this.current_block, this.translate_x, this.translate_y, this.translate_z, this.rotation_x, this.rotation_y, this.rotation_z);
-        for(const model_transform of transforms) {
-            this.shapes.cubeoutline.draw(context, program_state, model_transform, this.white,"LINES");
-            this.shapes.cube.draw(context, program_state, model_transform, this.materials.plastic);
-        }
-        // const t = program_state.animation_time / 1000, dt = program_state.animation_delta_time / 1000;
-    }
 
-    createBlock(shape_index, tx, ty, tz, rx, ry, rz) {
-        const cur_trans = this.transformations[shape_index];
-        let transforms = [];
-        let model_transform = Mat4.identity();
-
-        // translation
-        model_transform = model_transform.times(Mat4.translation(tx, ty, tz));
-
-        // rotation
-        model_transform = model_transform
-        .times(Mat4.rotation(rx, 1, 0, 0))
-        .times(Mat4.rotation(ry, 0, 1, 0))
-        .times(Mat4.rotation(rz, 0, 0, 1));
-
+        const cur_trans = this.transformations[this.current_block];
+        let model_transform = this.current_transform;
         for (const element of cur_trans) {
-            switch (element) {
-                case 'R':
-                    model_transform = model_transform.times(Mat4.translation(2,0,0));
-                    break;
-                case 'D': 
-                    model_transform = model_transform.times(Mat4.translation(0,-2,0));
-                    break;
-                case 'L':
-                    model_transform = model_transform.times(Mat4.translation(-2,0,0));
-                    break;
-                case 'U':
-                    model_transform = model_transform.times(Mat4.translation(0,2,0));
-                    break;
-                case 'T': 
-                    model_transform = model_transform.times(Mat4.translation(-2,-2,0));
-                default:
-                    break;
-            }
-
-            transforms.push(model_transform);
+            model_transform = this.getBlock(model_transform, element);
+            this.shapes.cubeoutline.draw(context, program_state, model_transform, this.white, "LINES");
+            this.shapes.cube.draw(context, program_state, model_transform, this.materials.test);
         }
 
-        return transforms;
+        this.drawgamefield(context, program_state);
+        const t = program_state.animation_time / 1000, dt = program_state.animation_delta_time / 1000;
+
     }
+
 
     checkMove(move) {
-        let transforms;
+        let model_translate = this.current_translations;
+        let model_rotate = this.current_rotations
         switch (move) {
-            case 'x':
-                transforms = this.createBlock(this.current_block, this.translate_x, this.translate_y, this.translate_z, this.rotation_x+Math.PI/2, this.rotation_y, this.rotation_z);
-                break;
-            case 'y':
-                transforms = this.createBlock(this.current_block, this.translate_x, this.translate_y, this.translate_z, this.rotation_x, this.rotation_y+Math.PI/2, this.rotation_z);
-                break;
-            case 'z':
-                transforms = this.createBlock(this.current_block, this.translate_x, this.translate_y, this.translate_z, this.rotation_x, this.rotation_y, this.rotation_z+Math.PI/2);
-                break;
-            case 'w':
-                transforms = this.createBlock(this.current_block, this.translate_x, this.translate_y, this.translate_z-2, this.rotation_x, this.rotation_y, this.rotation_z);
-                break;
             case 'a':
-                transforms = this.createBlock(this.current_block, this.translate_x-2, this.translate_y, this.translate_z, this.rotation_x, this.rotation_y, this.rotation_z);
+                model_rotate = Mat4.rotation(Math.PI / 2, 1, 0, 0).times(this.current_rotations)
                 break;
             case 's':
-                transforms = this.createBlock(this.current_block, this.translate_x, this.translate_y, this.translate_z+2, this.rotation_x, this.rotation_y, this.rotation_z);
+                model_rotate = Mat4.rotation(Math.PI / 2, 0, 1, 0).times(this.current_rotations)
                 break;
             case 'd':
-                transforms = this.createBlock(this.current_block, this.translate_x+2, this.translate_y, this.translate_z, this.rotation_x, this.rotation_y, this.rotation_z);
+                model_rotate = Mat4.rotation(Math.PI / 2, 0, 0, 1).times(this.current_rotations)
+                break;
+            case 'l':
+                model_translate = Mat4.translation(2, 0, 0).times(this.current_translations);
+                break;
+            case 'j':
+                model_translate = Mat4.translation(-2, 0, 0).times(this.current_translations);
+                break;
+            case 'i':
+                model_translate = Mat4.translation(0, 0, -2).times(this.current_translations);
+                break;
+            case 'k':
+                model_translate = Mat4.translation(0, 0, 2).times(this.current_translations);
                 break;
             default:
                 break;
         }
 
-        for(const model_transform of transforms) {
+        const cur_trans = this.transformations[this.current_block];
+        let model_transform = this.combineRandT(model_rotate, model_translate);
+
+        // out of bounds
+        for (const element of cur_trans) {
+            model_transform = this.getBlock(model_transform, element);
             let m = Matrix.flatten_2D_to_1D(model_transform);
-            if(m[3]>14 || m[11]<-4) {
+            console.log(m);
+            if( m[3] > 14 || m[11] < -4 ||m[3] < -4 || m[11] > 14) {
                 return false;
             }
         }
+
+        // in bounds
+        this.current_rotations = model_rotate;
+        this.current_translations = model_translate;
+        this.current_transform = this.combineRandT(model_rotate, model_translate);
         return true;
     }
 
-    drawgamefield(context, program_state){
-        // TODO: get rid of one side, center on initial block 
+    combineRandT(rot_matrix, trans_matrix) {
+        return trans_matrix.times(Mat4.translation(-1, 1, 0))
+            .times(rot_matrix)
+            .times(Mat4.translation(1, -1, 0));
+    }
 
+    getBlock(model_transform, element) {
+        let new_matrix = model_transform;
+        switch (element) {
+            case 'R':
+                new_matrix = model_transform.times(Mat4.translation(2, 0, 0));
+                break;
+            case 'D':
+                new_matrix = model_transform.times(Mat4.translation(0, -2, 0));
+                break;
+            case 'L':
+                new_matrix = model_transform.times(Mat4.translation(-2, 0, 0));
+                break;
+            case 'U':
+                new_matrix = model_transform.times(Mat4.translation(0, 2, 0));
+                break;
+            case 'T':
+                new_matrix = model_transform.times(Mat4.translation(-2, -2, 0));
+            default:
+                break;
+        }
+        return new_matrix;
+    }
+
+    drawgamefield(context, program_state) {
         let model_transform = Mat4.identity();
-        
+
         model_transform = model_transform.times(Mat4.translation(-6, -10, -6));
         // this.shapes.cube.draw(context, program_state, model_transform, this.materials.plastic);
-        for (let i = 0; i < 10; i++){
-            model_transform = model_transform.times(Mat4.translation(2,0,0));
-            for (let j = 0; j < 10; j++){
-                model_transform = model_transform.times(Mat4.translation(0,0,2));
-                this.shapes.squareoutline.draw(context, program_state, model_transform, this.white,"LINES");
+        for (let i = 0; i < 10; i++) {
+            model_transform = model_transform.times(Mat4.translation(2, 0, 0));
+            for (let j = 0; j < 10; j++) {
+                model_transform = model_transform.times(Mat4.translation(0, 0, 2));
+                this.shapes.squareoutline.draw(context, program_state, model_transform, this.white, "LINES");
             }
-            model_transform = model_transform.times(Mat4.translation(0,0,-20));
+            model_transform = model_transform.times(Mat4.translation(0, 0, -20));
         }
-        model_transform = model_transform.times(Mat4.translation(2,-2,0));
-        for (let i = 0; i < 10; i++){
-            model_transform = model_transform.times(Mat4.translation(0,0,2));
-            for (let j = 0; j < 10; j++){
-                model_transform = model_transform.times(Mat4.translation(0,2,0));
-                this.shapes.squareoutline2.draw(context, program_state, model_transform, this.white,"LINES");
+        model_transform = model_transform.times(Mat4.translation(2, -2, 0));
+        for (let i = 0; i < 10; i++) {
+            model_transform = model_transform.times(Mat4.translation(0, 0, 2));
+            for (let j = 0; j < 10; j++) {
+                model_transform = model_transform.times(Mat4.translation(0, 2, 0));
+                this.shapes.squareoutline2.draw(context, program_state, model_transform, this.white, "LINES");
             }
-            model_transform = model_transform.times(Mat4.translation(0,-20,0));
+            model_transform = model_transform.times(Mat4.translation(0, -20, 0));
         }
-        model_transform = model_transform.times(Mat4.translation(-20,0,-20));
-        for (let i = 0; i < 10; i++){
-            model_transform = model_transform.times(Mat4.translation(0,0,2));
-            for (let j = 0; j < 10; j++){
-                model_transform = model_transform.times(Mat4.translation(0,2,0));
+        model_transform = model_transform.times(Mat4.translation(-20, 0, -20));
+        for (let i = 0; i < 10; i++) {
+            model_transform = model_transform.times(Mat4.translation(0, 0, 2));
+            for (let j = 0; j < 10; j++) {
+                model_transform = model_transform.times(Mat4.translation(0, 2, 0));
                 // this.shapes.squareoutline2.draw(context, program_state, model_transform, this.white,"LINES");
             }
-            model_transform = model_transform.times(Mat4.translation(0,-20,0));
+            model_transform = model_transform.times(Mat4.translation(0, -20, 0));
         }
-        model_transform = model_transform.times(Mat4.translation(-2,0,2));
-        for (let i = 0; i < 10; i++){
-            model_transform = model_transform.times(Mat4.translation(0,2,0));
-            for (let j = 0; j < 10; j++){
-                model_transform = model_transform.times(Mat4.translation(2,0,0));
+        model_transform = model_transform.times(Mat4.translation(-2, 0, 2));
+        for (let i = 0; i < 10; i++) {
+            model_transform = model_transform.times(Mat4.translation(0, 2, 0));
+            for (let j = 0; j < 10; j++) {
+                model_transform = model_transform.times(Mat4.translation(2, 0, 0));
                 // this.shapes.squareoutline3.draw(context, program_state, model_transform, this.white,"LINES");
             }
-            model_transform = model_transform.times(Mat4.translation(-20,0,0));
+            model_transform = model_transform.times(Mat4.translation(-20, 0, 0));
         }
-        model_transform = model_transform.times(Mat4.translation(0,-20,-20));
-        for (let i = 0; i < 10; i++){
-            model_transform = model_transform.times(Mat4.translation(0,2,0));
-            for (let j = 0; j < 10; j++){
-                model_transform = model_transform.times(Mat4.translation(2,0,0));
-                this.shapes.squareoutline3.draw(context, program_state, model_transform, this.white,"LINES");
+        model_transform = model_transform.times(Mat4.translation(0, -20, -20));
+        for (let i = 0; i < 10; i++) {
+            model_transform = model_transform.times(Mat4.translation(0, 2, 0));
+            for (let j = 0; j < 10; j++) {
+                model_transform = model_transform.times(Mat4.translation(2, 0, 0));
+                this.shapes.squareoutline3.draw(context, program_state, model_transform, this.white, "LINES");
             }
-            model_transform = model_transform.times(Mat4.translation(-20,0,0));
-        }        
+            model_transform = model_transform.times(Mat4.translation(-20, 0, 0));
+        }
     }
 }
 
@@ -428,7 +429,7 @@ class Gouraud_Shader extends Shader {
         // within this function, one data field at a time, to fully initialize the shader for a draw.
 
         // Fill in any missing fields in the Material object with custom defaults for this shader:
-        const defaults = {color: color(0, 0, 0, 1), ambient: 0, diffusivity: 1, specularity: 1, smoothness: 40};
+        const defaults = { color: color(0, 0, 0, 1), ambient: 0, diffusivity: 1, specularity: 1, smoothness: 40 };
         material = Object.assign({}, defaults, material);
 
         this.send_material(context, gpu_addresses, material);
