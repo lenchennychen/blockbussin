@@ -101,8 +101,33 @@ export class blockbussin extends Scene {
         this.current_translations = Mat4.translation(INIT_X, INIT_Y, INIT_Z);
         this.current_transform = Mat4.translation(INIT_X, INIT_Y, INIT_Z);
 
-        // TODO: set correct camera location
-        this.initial_camera_location = Mat4.look_at(vec3(-20, 40, 80), vec3(10, 0, 0), vec3(0, 1, 0));
+        // sets camera location
+        this.initial_camera_location =  Mat4.look_at(vec3(-35, 20, 45), vec3(10, 0, 0), vec3(0, 1, 0));
+
+        //sets game blocks
+        this.game_blocks = new Array(10);
+        for (var i = 0; i < 10; i++){ 
+            this.game_blocks[i] = new Array(10);
+        }
+        for (var i = 0; i < 10; i++){ 
+            for (var j = 0; j < 10; j++){ 
+                this.game_blocks[i][j] = new Array(10).fill([0,hex_color("#ff10f0")]);
+            }
+        }
+        //temporary before drop block function just to visualize
+        this.game_blocks[0][0][0] = [1, hex_color("#ff10f0")];
+        this.game_blocks[1][0][0] = [1, hex_color("#ff10f0")];
+        this.game_blocks[0][1][0] = [1, hex_color("#ff10f0")];
+        this.game_blocks[2][1][0] = [1, hex_color("#ff10f0")];
+        this.game_blocks[2][0][0] = [1, hex_color("#ff10f0")];
+        this.game_blocks[1][1][0] = [1, hex_color("#ff10f0")];
+        this.game_blocks[1][2][0] = [1, hex_color("#ff10f0")];
+        this.game_blocks[1][3][0] = [1, hex_color("#ff10f0")];
+        this.game_blocks[1][4][0] = [1, hex_color("#ff10f0")];
+
+        console.log(this.game_blocks);
+
+
     }
 
     make_control_panel() {
@@ -157,7 +182,7 @@ export class blockbussin extends Scene {
 
         this.drawgamefield(context, program_state);
         const t = program_state.animation_time / 1000, dt = program_state.animation_delta_time / 1000;
-
+        this.drawgameblocks(context, program_state);
     }
 
 
@@ -238,7 +263,23 @@ export class blockbussin extends Scene {
         }
         return new_matrix;
     }
+    drawgameblocks(context, program_state){
+        let model_transform = Mat4.identity();
+        model_transform = model_transform.times(Mat4.translation(-4, -10, -4));
+  
+        for (var i = 0; i < 10; i++){ 
+            for (var j = 0; j < 10; j++){
+                for (var k = 0; k < 10; k++){
+                    if (this.game_blocks[i][j][k][0] == 1){
+                        let temp_transform = model_transform.times(Mat4.translation(2*i,2*j,2*k));
+                        this.shapes.cubeoutline.draw(context, program_state, temp_transform, this.white, "LINES");
+                        this.shapes.cube.draw(context, program_state, temp_transform, this.materials.test.override({color: this.game_blocks[i][j][k][1]}));
+                    }
+                }
+            }
+        }
 
+    }
     drawgamefield(context, program_state) {
         let model_transform = Mat4.identity();
 
