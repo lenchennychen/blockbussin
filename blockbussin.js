@@ -262,7 +262,7 @@ export class blockbussin extends Scene {
                     if (this.game_blocks[i][j][k][0] == 1){
                         let temp_transform = model_transform.times(Mat4.translation(2*i,2*j,2*k));
                         this.shapes.cubeoutline.draw(context, program_state, temp_transform, this.white, "LINES");
-                        // this.shapes.cube.draw(context, program_state, temp_transform, this.materials.test.override({color: this.game_blocks[i][j][k][1]}));
+                        this.shapes.cube.draw(context, program_state, temp_transform, this.materials.test.override({color: this.game_blocks[i][j][k][1]}));
                     }
                 }
             }
