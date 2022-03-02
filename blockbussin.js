@@ -214,10 +214,11 @@ export class blockbussin extends Scene {
         let model_transform = this.combineRandT(model_rotate, model_translate);
 
         // out of bounds
+        console.log(cur_trans);
         for (const element of cur_trans) {
             model_transform = this.getBlock(model_transform, element);
             let m = Matrix.flatten_2D_to_1D(model_transform);
-            console.log(m);
+            // console.log(m);
             if( m[3] > 14 || m[11] < -4 ||m[3] < -4 || m[11] > 14) {
                 return false;
             }
@@ -235,21 +236,25 @@ export class blockbussin extends Scene {
         let model_rotate = this.current_rotations
         const cur_trans = this.transformations[this.current_block];
         let model_transform = this.combineRandT(model_rotate, model_translate);
-        let temp_transform = Mat4.identity();
-        let temp_transform1 = Mat4.identity().times(Mat4.translation(-4, -10, -4));
+        let temp_transform = Mat4.identity().times(Mat4.translation(-4, -10, -4));
         // let temp_transform2 = temp_transform1.times(Mat4.translation(2*i,2*j,2*k));
         // this.shapes.cube.draw(context, program_state, temp_transform1, this.materials.test);
-        console.log(temp_transform1);
+        console.log(temp_transform);
+        console.log(this.current_transform);
+        let translatedown = -15;
         for (const element of cur_trans) { 
             model_transform = this.getBlock(model_transform, element);
             let m = Matrix.flatten_2D_to_1D(model_transform);
-            console.log(m);
+            while(m[7] + translatedown < -15){
+                translatedown++;
+            }
+            console.log(m[3], m[7], m[11]);
             console.log(model_transform);
         }
-        this.current_block = null;
-        this.current_rotations = Mat4.identity();
-        this.current_translations = Mat4.translation(INIT_X, INIT_Y, INIT_Z);
-        this.current_transform = Mat4.translation(INIT_X, INIT_Y, INIT_Z);
+        // this.current_block = null;
+        // this.current_rotations = Mat4.identity();
+        this.current_translations = this.current_translations.times(Mat4.translation(0, translatedown, 0));
+        this.current_transform = this.current_transform.times(Mat4.translation(0, translatedown, 0));
     }
 
     drawgameblocks(context, program_state){
