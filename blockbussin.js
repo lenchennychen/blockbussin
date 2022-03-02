@@ -141,12 +141,7 @@ export class blockbussin extends Scene {
         // forward = away
         this.key_triggered_button("Translate forward", ["i"], () => this.checkMove('i'));
         this.key_triggered_button("Translate backward", ["k"], () => this.checkMove('k'));
-        this.key_triggered_button("Drop Block", [" "], () => {
-            this.current_block = null;
-            this.current_rotations = Mat4.identity();
-            this.current_translations = Mat4.translation(INIT_X, INIT_Y, INIT_Z);
-            this.current_transform = Mat4.translation(INIT_X, INIT_Y, INIT_Z);
-        });
+        this.key_triggered_button("Drop Block", [" "], () => this.dropBlock());
     }
 
     display(context, program_state) {
@@ -234,7 +229,45 @@ export class blockbussin extends Scene {
         this.current_transform = this.combineRandT(model_rotate, model_translate);
         return true;
     }
+    //TODO: figure out how to pass context and program state, along with checking if blocks are too far down then adding them to gameblocks matrix
+    dropBlock(){
+        let model_translate = this.current_translations;
+        let model_rotate = this.current_rotations
+        const cur_trans = this.transformations[this.current_block];
+        let model_transform = this.combineRandT(model_rotate, model_translate);
+        let temp_transform = Mat4.identity();
+        let temp_transform1 = Mat4.identity().times(Mat4.translation(-4, -10, -4));
+        // let temp_transform2 = temp_transform1.times(Mat4.translation(2*i,2*j,2*k));
+        // this.shapes.cube.draw(context, program_state, temp_transform1, this.materials.test);
+        console.log(temp_transform1);
+        for (const element of cur_trans) { 
+            model_transform = this.getBlock(model_transform, element);
+            let m = Matrix.flatten_2D_to_1D(model_transform);
+            console.log(m);
+            console.log(model_transform);
+        }
+        this.current_block = null;
+        this.current_rotations = Mat4.identity();
+        this.current_translations = Mat4.translation(INIT_X, INIT_Y, INIT_Z);
+        this.current_transform = Mat4.translation(INIT_X, INIT_Y, INIT_Z);
+    }
 
+    drawgameblocks(context, program_state){
+        let model_transform = Mat4.identity();
+        model_transform = model_transform.times(Mat4.translation(-4, -10, -4));
+  
+        for (var i = 0; i < 10; i++){ 
+            for (var j = 0; j < 10; j++){
+                for (var k = 0; k < 10; k++){
+                    if (this.game_blocks[i][j][k][0] == 1){
+                        let temp_transform = model_transform.times(Mat4.translation(2*i,2*j,2*k));
+                        this.shapes.cubeoutline.draw(context, program_state, temp_transform, this.white, "LINES");
+                        // this.shapes.cube.draw(context, program_state, temp_transform, this.materials.test.override({color: this.game_blocks[i][j][k][1]}));
+                    }
+                }
+            }
+        }
+    }
     combineRandT(rot_matrix, trans_matrix) {
         return trans_matrix.times(Mat4.translation(-1, 1, 0))
             .times(rot_matrix)
@@ -263,23 +296,7 @@ export class blockbussin extends Scene {
         }
         return new_matrix;
     }
-    drawgameblocks(context, program_state){
-        let model_transform = Mat4.identity();
-        model_transform = model_transform.times(Mat4.translation(-4, -10, -4));
-  
-        for (var i = 0; i < 10; i++){ 
-            for (var j = 0; j < 10; j++){
-                for (var k = 0; k < 10; k++){
-                    if (this.game_blocks[i][j][k][0] == 1){
-                        let temp_transform = model_transform.times(Mat4.translation(2*i,2*j,2*k));
-                        this.shapes.cubeoutline.draw(context, program_state, temp_transform, this.white, "LINES");
-                        this.shapes.cube.draw(context, program_state, temp_transform, this.materials.test.override({color: this.game_blocks[i][j][k][1]}));
-                    }
-                }
-            }
-        }
 
-    }
     drawgamefield(context, program_state) {
         let model_transform = Mat4.identity();
 
