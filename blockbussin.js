@@ -241,11 +241,11 @@ export class blockbussin extends Scene {
         // this.shapes.cube.draw(context, program_state, temp_transform1, this.materials.test);
         console.log(temp_transform);
         console.log(this.current_transform);
-        let translatedown = -15;
+        let translatedown = -20;
         for (const element of cur_trans) { 
             model_transform = this.getBlock(model_transform, element);
             let m = Matrix.flatten_2D_to_1D(model_transform);
-            while(m[7] + translatedown < -15){
+            while(m[7] + translatedown < -10){
                 translatedown++;
             }
             console.log(m[3], m[7], m[11]);
