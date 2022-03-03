@@ -95,6 +95,9 @@ export class blockbussin extends Scene {
         }
         this.white = new Material(new defs.Basic_Shader());
 
+        // set score to 0
+        this.score = 0;
+
         // state stores information about the current block type and transformations
         this.current_block = 1;
         this.current_rotations = Mat4.identity();
@@ -126,8 +129,6 @@ export class blockbussin extends Scene {
         this.game_blocks[1][4][0] = [1, hex_color("#ff10f0")];
 
         console.log(this.game_blocks);
-
-
     }
 
     make_control_panel() {
@@ -142,6 +143,7 @@ export class blockbussin extends Scene {
         this.key_triggered_button("Translate forward", ["i"], () => this.checkMove('i'));
         this.key_triggered_button("Translate backward", ["k"], () => this.checkMove('k'));
         this.key_triggered_button("Drop Block", [" "], () => this.dropBlock());
+        this.key_triggered_button("Restart", ["g"], () => this.restart());
     }
 
     display(context, program_state) {
@@ -153,6 +155,7 @@ export class blockbussin extends Scene {
             // Define the global camera and projection matrices, which are stored in program_state.
             program_state.set_camera(this.initial_camera_location);
         }
+        this.displayUI();
 
         program_state.projection_transform = Mat4.perspective(
             Math.PI / 4, context.width / context.height, .1, 1000);
@@ -165,7 +168,6 @@ export class blockbussin extends Scene {
         if (this.current_block == null) {
             this.current_block = Math.floor(Math.random() * 5);
         }
-
 
         const cur_trans = this.transformations[this.current_block];
         let model_transform = this.current_transform;
@@ -180,10 +182,9 @@ export class blockbussin extends Scene {
         this.drawgameblocks(context, program_state);
     }
 
-
     checkMove(move) {
         let model_translate = this.current_translations;
-        let model_rotate = this.current_rotations
+        let model_rotate = this.current_rotations;
         switch (move) {
             case 'a':
                 model_rotate = Mat4.rotation(Math.PI / 2, 1, 0, 0).times(this.current_rotations)
@@ -274,9 +275,7 @@ export class blockbussin extends Scene {
         }
     }
     combineRandT(rot_matrix, trans_matrix) {
-        return trans_matrix.times(Mat4.translation(-1, 1, 0))
-            .times(rot_matrix)
-            .times(Mat4.translation(1, -1, 0));
+        return trans_matrix.times(rot_matrix);
     }
 
     getBlock(model_transform, element) {
@@ -352,7 +351,20 @@ export class blockbussin extends Scene {
             model_transform = model_transform.times(Mat4.translation(-20, 0, 0));
         }
     }
+
+    displayUI() {
+        var score = document.getElementById("score");
+        score.innerHTML = this.score;
+    }
+
+    restart() {
+        var element = document.getElementById("startDisplay");
+        element.parentNode.removeChild(element);
+        // TODO: reset all class variables to start state
+    }
+
 }
+
 
 class Gouraud_Shader extends Shader {
     // This is a Shader using Phong_Shader as template
