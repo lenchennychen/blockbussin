@@ -63,12 +63,11 @@ class Square_Outline3 extends Shape {
 export class blockbussin extends Scene {
     constructor() {
         super();
-
         this.transformations = [['N', 'D', 'D', 'D'],
-        ['N', 'D', 'R', 'D'],
-        ['N', 'R', 'D', 'L'],
-        ['N', 'R', 'R', 'T'],
-        ['N', 'D', 'D', 'R']];
+                                ['N', 'D', 'R', 'D'],
+                                ['N', 'R', 'D', 'L'],
+                                ['N', 'R', 'R', 'T'],
+                                ['N', 'D', 'D', 'R']];
 
         // At the beginning of our program, load one of each of these shape definitions onto the GPU.
         this.shapes = {
@@ -99,7 +98,7 @@ export class blockbussin extends Scene {
         this.score = 0;
 
         // state stores information about the current block type and transformations
-        this.current_block = 1;
+        this.current_block = null;
         this.current_rotations = Mat4.identity();
         this.current_translations = Mat4.translation(INIT_X, INIT_Y, INIT_Z);
         this.current_transform = Mat4.translation(INIT_X, INIT_Y, INIT_Z);
@@ -108,15 +107,9 @@ export class blockbussin extends Scene {
         this.initial_camera_location =  Mat4.look_at(vec3(-35, 20, 45), vec3(10, 0, 0), vec3(0, 1, 0));
 
         //sets game blocks
-        this.game_blocks = new Array(10);
-        for (var i = 0; i < 10; i++){ 
-            this.game_blocks[i] = new Array(10);
-        }
-        for (var i = 0; i < 10; i++){ 
-            for (var j = 0; j < 10; j++){ 
-                this.game_blocks[i][j] = new Array(10).fill([0,hex_color("#ff10f0")]);
-            }
-        }
+        const range = new Array(10).fill([0,hex_color("#ff10f0")]);
+        this.game_blocks = range.map(e => range.map(e => range.map(e => e)));
+
         //temporary before drop block function just to visualize
         this.game_blocks[0][0][0] = [1, hex_color("#ff10f0")];
         this.game_blocks[0][1][0] = [1, hex_color("#ff10f0")];
@@ -377,10 +370,25 @@ export class blockbussin extends Scene {
         score.innerHTML = this.score;
     }
 
+
+
     restart() {
         var element = document.getElementById("startDisplay");
-        element.parentNode.removeChild(element);
-        // TODO: reset all class variables to start state
+        if (element) {element.parentNode.removeChild(element)};
+        
+        // set score to 0
+        this.score = 0;
+
+        // state stores information about the current block type and transformations
+        this.current_block = null;
+        this.current_rotations = Mat4.identity();
+        this.current_translations = Mat4.translation(INIT_X, INIT_Y, INIT_Z);
+        this.current_transform = Mat4.translation(INIT_X, INIT_Y, INIT_Z);
+
+        // sets camera location
+        this.initial_camera_location =  Mat4.look_at(vec3(-35, 20, 45), vec3(10, 0, 0), vec3(0, 1, 0));
+        const range = new Array(10).fill([0,hex_color("#ff10f0")]);
+        this.game_blocks = range.map(e => range.map(e => range.map(e => e)));
     }
 
 }
