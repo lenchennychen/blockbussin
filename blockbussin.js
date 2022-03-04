@@ -112,17 +112,6 @@ export class blockbussin extends Scene {
         //sets game blocks
         const range = new Array(10).fill(-1);
         this.game_blocks = range.map(e => range.map(e => range.map(e => e)));
-
-        //temporary before drop block function just to visualize
-        //this.game_blocks[0][0][0] = [1, hex_color("#ff10f0")];
-        //this.game_blocks[0][1][0] = [1, hex_color("#ff10f0")];
-        // this.game_blocks[0][1][0] = [1, hex_color("#ff10f0")];
-        // this.game_blocks[2][1][0] = [1, hex_color("#ff10f0")];
-        // this.game_blocks[2][0][0] = [1, hex_color("#ff10f0")];
-        // this.game_blocks[1][1][0] = [1, hex_color("#ff10f0")];
-        // this.game_blocks[1][2][0] = [1, hex_color("#ff10f0")];
-        // this.game_blocks[1][3][0] = [1, hex_color("#ff10f0")];
-        // this.game_blocks[1][4][0] = [1, hex_color("#ff10f0")];
     }
 
     make_control_panel() {
@@ -249,8 +238,6 @@ export class blockbussin extends Scene {
             let current_array = this.game_blocks[curr_coordinates[i][0]][curr_coordinates[i][2]];
             console.log(curr_coordinates[i]);
 
-            // TODO: doesn't account for gaps
-            // we need to find last index of non neg number + 1
             let new_y = 9;
             while (current_array[new_y] === -1) {
                 new_y--;
@@ -316,8 +303,6 @@ export class blockbussin extends Scene {
         return new_matrix;
     }
 
-    // TODO: this function was probably the most illegible code i read this year
-    // i figured it out but next time at least add comments?
     drawgamefield(context, program_state) {
         // draw floor 
         let model_transform = Mat4.identity();
