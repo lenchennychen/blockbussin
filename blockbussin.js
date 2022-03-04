@@ -4,9 +4,9 @@ const {
     Vector, Vector3, vec, vec3, vec4, color, hex_color, Shader, Matrix, Mat4, Light, Shape, Material, Scene, Cube
 } = tiny;
 
-const INIT_X = 6;
-const INIT_Y = 10;
-const INIT_Z = 4;
+const INIT_X = 10;
+const INIT_Y = 20;
+const INIT_Z = 10;
 
 
 class Cube_Outline extends Shape {
@@ -64,10 +64,17 @@ export class blockbussin extends Scene {
     constructor() {
         super();
         this.transformations = [['N', 'D', 'D', 'D'],
-                                ['N', 'D', 'R', 'D'],
-                                ['N', 'R', 'D', 'L'],
-                                ['N', 'R', 'R', 'T'],
-                                ['N', 'D', 'D', 'R']];
+        ['N', 'D', 'R', 'D'],
+        ['N', 'R', 'D', 'L'],
+        ['N', 'R', 'R', 'T'],
+        ['N', 'D', 'D', 'R']];
+        this.colors = [
+            hex_color("#ff10f0"),
+            hex_color("#8810f0"),
+            hex_color("#691428"),
+            hex_color("#f69d28"),
+            hex_color("#d64285")
+        ]
 
         // At the beginning of our program, load one of each of these shape definitions onto the GPU.
         this.shapes = {
@@ -86,9 +93,6 @@ export class blockbussin extends Scene {
         this.materials = {
             test: new Material(new defs.Phong_Shader(),
                 { ambient: .4, diffusivity: .6, color: hex_color("#ff10f0") }),
-            test2: new Material(new Gouraud_Shader(),
-                { ambient: .4, diffusivity: .6, color: hex_color("#992828") }),
-            ring: new Material(new Ring_Shader()),
             plastic: new Material(new defs.Phong_Shader(),
                 { ambient: .4, diffusivity: .6, color: hex_color("#ffffff"), }),
         }
@@ -101,18 +105,17 @@ export class blockbussin extends Scene {
         this.current_block = null;
         this.current_rotations = Mat4.identity();
         this.current_translations = Mat4.translation(INIT_X, INIT_Y, INIT_Z);
-        this.current_transform = Mat4.translation(INIT_X, INIT_Y, INIT_Z);
 
         // sets camera location
-        this.initial_camera_location =  Mat4.look_at(vec3(-35, 20, 45), vec3(10, 0, 0), vec3(0, 1, 0));
+        this.initial_camera_location = Mat4.look_at(vec3(50, 50, 50), vec3(0, 0, 0), vec3(0, 1, 0));
 
         //sets game blocks
-        const range = new Array(10).fill([0,hex_color("#ff10f0")]);
+        const range = new Array(10).fill(-1);
         this.game_blocks = range.map(e => range.map(e => range.map(e => e)));
 
         //temporary before drop block function just to visualize
-        this.game_blocks[0][0][0] = [1, hex_color("#ff10f0")];
-        this.game_blocks[0][1][0] = [1, hex_color("#ff10f0")];
+        //this.game_blocks[0][0][0] = [1, hex_color("#ff10f0")];
+        //this.game_blocks[0][1][0] = [1, hex_color("#ff10f0")];
         // this.game_blocks[0][1][0] = [1, hex_color("#ff10f0")];
         // this.game_blocks[2][1][0] = [1, hex_color("#ff10f0")];
         // this.game_blocks[2][0][0] = [1, hex_color("#ff10f0")];
@@ -120,8 +123,6 @@ export class blockbussin extends Scene {
         // this.game_blocks[1][2][0] = [1, hex_color("#ff10f0")];
         // this.game_blocks[1][3][0] = [1, hex_color("#ff10f0")];
         // this.game_blocks[1][4][0] = [1, hex_color("#ff10f0")];
-
-        console.log(this.game_blocks);
     }
 
     make_control_panel() {
@@ -163,11 +164,11 @@ export class blockbussin extends Scene {
         }
 
         const cur_trans = this.transformations[this.current_block];
-        let model_transform = this.current_transform;
+        let model_transform = this.combineRandT(this.current_rotations, this.current_translations);
         for (const element of cur_trans) {
             model_transform = this.getBlock(model_transform, element);
             this.shapes.cubeoutline.draw(context, program_state, model_transform, this.white, "LINES");
-            this.shapes.cube.draw(context, program_state, model_transform, this.materials.test);
+            this.shapes.cube.draw(context, program_state, model_transform, this.materials.test.override({ color: this.colors[this.current_block] }));
         }
 
         this.drawgamefield(context, program_state);
@@ -189,16 +190,16 @@ export class blockbussin extends Scene {
                 model_rotate = Mat4.rotation(Math.PI / 2, 0, 0, 1).times(this.current_rotations)
                 break;
             case 'l':
-                model_translate = Mat4.translation(2, 0, 0).times(this.current_translations);
-                break;
-            case 'j':
-                model_translate = Mat4.translation(-2, 0, 0).times(this.current_translations);
-                break;
-            case 'i':
                 model_translate = Mat4.translation(0, 0, -2).times(this.current_translations);
                 break;
-            case 'k':
+            case 'j':
                 model_translate = Mat4.translation(0, 0, 2).times(this.current_translations);
+                break;
+            case 'i':
+                model_translate = Mat4.translation(-2, 0, 0).times(this.current_translations);
+                break;
+            case 'k':
+                model_translate = Mat4.translation(2, 0, 0).times(this.current_translations);
                 break;
             default:
                 break;
@@ -207,13 +208,14 @@ export class blockbussin extends Scene {
         const cur_trans = this.transformations[this.current_block];
         let model_transform = this.combineRandT(model_rotate, model_translate);
 
+        // console.log(this.combineRandT(this.current_rotations, this.current_translations))
+
         // out of bounds
-        console.log(cur_trans);
         for (const element of cur_trans) {
             model_transform = this.getBlock(model_transform, element);
             let m = Matrix.flatten_2D_to_1D(model_transform);
             // console.log(m);
-            if( m[3] > 14 || m[11] < -4 ||m[3] < -4 || m[11] > 14) {
+            if (m[3] > 18 || m[11] < 0 || m[3] < 0 || m[11] > 18) {
                 return false;
             }
         }
@@ -221,72 +223,84 @@ export class blockbussin extends Scene {
         // in bounds
         this.current_rotations = model_rotate;
         this.current_translations = model_translate;
-        this.current_transform = this.combineRandT(model_rotate, model_translate);
         return true;
     }
+
+    getBlockCoords(temp_matrix) {
+        let model_transform = this.combineRandT(this.current_rotations, this.current_translations);
+        let m = temp_matrix.times(vec4(0, 0, 0, 1))
+        console.log(m);
+        m = model_transform.times(m);
+        let x = (m[0] | 0) / 2;
+        let y = m[1] / 2;
+        let z = m[2] / 2;
+        return [x,y,z];
+    }
+
+
     //TODO: figure out how to pass context and program state, along with checking if blocks are too far down then adding them to gameblocks matrix
-    dropBlock(){
-        let model_translate = this.current_translations;
-        let model_rotate = this.current_rotations
+    dropBlock() {
         const cur_trans = this.transformations[this.current_block];
-        let model_transform = this.combineRandT(model_rotate, model_translate);
-        let temp_transform = Mat4.identity().times(Mat4.translation(-4, -10, -4));
+        
         // let temp_transform2 = temp_transform1.times(Mat4.translation(2*i,2*j,2*k));
         // this.shapes.cube.draw(context, program_state, temp_transform1, this.materials.test);
-        console.log(temp_transform);
-        console.log(this.current_transform);
-        let translatedown = -20;
-        for (const element of cur_trans) { 
+        //console.log(temp_transform);
+        /*let translatedown = -20;
+        for (const element of cur_trans) {
             model_transform = this.getBlock(model_transform, element);
             let m = Matrix.flatten_2D_to_1D(model_transform);
-            while(m[7] + translatedown < -10){
-                translatedown++;
+            while (m[7] + translatedown < -10) {
+                translatedown += 2;
             }
-            console.log(m[3], m[7], m[11]);
-            console.log(model_transform);
-        }
-        let x = 0;
-        let y = 0;
-        let z = 0;
-        for (const element of cur_trans) { 
-            model_transform = this.getBlock(model_transform, element);
-            let m = Matrix.flatten_2D_to_1D(model_transform);
-            x = (m[3] + 2) / 2;
-            y = (m[7] + 14 + translatedown) / 2;
-            z = (m[11] + 4) / 2;
-            console.log(m[3], m[7], m[11]);
-            console.log(x,y,z);
-            console.log(this.game_blocks);
-            this.game_blocks[x][y][z] = [1, hex_color("#ff10f0")];
+            //console.log(m[3], m[7], m[11]);
+            //console.log(model_transform);
+        }*/
 
+
+        let y_drop = 20;
+        let i = 0;
+        let curr_coordinates = [];
+        let temp_matrix = Mat4.identity();
+        for (const element of cur_trans) {
+            temp_matrix = this.getBlock(temp_matrix, element)
+            curr_coordinates[i] = this.getBlockCoords(temp_matrix);
+            let current_array = this.game_blocks[curr_coordinates[i][0]][curr_coordinates[i][2]];
+
+            // TODO: doesn't account for gaps
+            // we need to find last index of non neg number + 1
+            let new_y = current_array.indexOf(-1);
+            let y_transf = curr_coordinates[i][1] - new_y;
+            if (y_drop > y_transf) { y_drop = y_transf; }
+            i++;
+        }
+
+
+        for (const n of curr_coordinates) {
+            //console.log(n[0], n[2], n[1]-y_drop);
+            //console.log(this.game_blocks[n[0]][n[2]][n[1]-y_drop]);
+            this.game_blocks[n[0]][n[2]][n[1] - y_drop] = this.current_block;
         }
 
         this.current_block = null;
         this.current_rotations = Mat4.identity();
         this.current_translations = Mat4.translation(INIT_X, INIT_Y, INIT_Z);
-        this.current_transform = Mat4.translation(INIT_X, INIT_Y, INIT_Z);
-        
-        
-
-        console.log(this.current_transform);
     }
 
-    drawgameblocks(context, program_state){
-        let model_transform = Mat4.identity();
-        model_transform = model_transform.times(Mat4.translation(-4, -10, -4));
-  
-        for (var i = 0; i < 10; i++){ 
-            for (var j = 0; j < 10; j++){
-                for (var k = 0; k < 10; k++){
-                    if (this.game_blocks[i][j][k][0] == 1){
-                        let temp_transform = model_transform.times(Mat4.translation(2*i,2*j,2*k));
-                        this.shapes.cubeoutline.draw(context, program_state, temp_transform, this.white, "LINES");
-                        this.shapes.cube.draw(context, program_state, temp_transform, this.materials.test.override({color: this.game_blocks[i][j][k][1]}));
+    drawgameblocks(context, program_state) {
+        for (var i = 0; i < 10; i++) {
+            for (var j = 0; j < 10; j++) {
+                for (var k = 0; k < 10; k++) {
+                    if (this.game_blocks[i][j][k] != -1) {
+                        //console.log(this.game_blocks[i][j][k]);
+                        let model_transform = Mat4.translation(2 * i, 2 * k, 2 * j);
+                        this.shapes.cubeoutline.draw(context, program_state, model_transform, this.white, "LINES");
+                        this.shapes.cube.draw(context, program_state, model_transform, this.materials.test.override({ color: this.colors[this.game_blocks[i][j][k]] }));
                     }
                 }
             }
         }
     }
+
     combineRandT(rot_matrix, trans_matrix) {
         return trans_matrix.times(rot_matrix);
     }
@@ -314,54 +328,37 @@ export class blockbussin extends Scene {
         return new_matrix;
     }
 
+    // TODO: this function was probably the most illegible code i read this year
+    // i figured it out but next time at least add comments?
     drawgamefield(context, program_state) {
+        // draw floor 
         let model_transform = Mat4.identity();
-
-        model_transform = model_transform.times(Mat4.translation(-6, -10, -6));
-        // this.shapes.cube.draw(context, program_state, model_transform, this.materials.plastic);
         for (let i = 0; i < 10; i++) {
-            model_transform = model_transform.times(Mat4.translation(2, 0, 0));
             for (let j = 0; j < 10; j++) {
-                model_transform = model_transform.times(Mat4.translation(0, 0, 2));
                 this.shapes.squareoutline.draw(context, program_state, model_transform, this.white, "LINES");
+                model_transform = model_transform.times(Mat4.translation(0, 0, 2));
             }
-            model_transform = model_transform.times(Mat4.translation(0, 0, -20));
+            model_transform = model_transform.times(Mat4.translation(2, 0, -20));
         }
-        model_transform = model_transform.times(Mat4.translation(2, -2, 0));
+
+        // draw wall 1
+        model_transform = Mat4.identity();
         for (let i = 0; i < 10; i++) {
-            model_transform = model_transform.times(Mat4.translation(0, 0, 2));
             for (let j = 0; j < 10; j++) {
-                model_transform = model_transform.times(Mat4.translation(0, 2, 0));
                 this.shapes.squareoutline2.draw(context, program_state, model_transform, this.white, "LINES");
-            }
-            model_transform = model_transform.times(Mat4.translation(0, -20, 0));
-        }
-        model_transform = model_transform.times(Mat4.translation(-20, 0, -20));
-        for (let i = 0; i < 10; i++) {
-            model_transform = model_transform.times(Mat4.translation(0, 0, 2));
-            for (let j = 0; j < 10; j++) {
                 model_transform = model_transform.times(Mat4.translation(0, 2, 0));
-                // this.shapes.squareoutline2.draw(context, program_state, model_transform, this.white,"LINES");
             }
-            model_transform = model_transform.times(Mat4.translation(0, -20, 0));
+            model_transform = model_transform.times(Mat4.translation(0, -20, 2));
         }
-        model_transform = model_transform.times(Mat4.translation(-2, 0, 2));
+
+        // draw wall 2
+        model_transform = Mat4.identity();
         for (let i = 0; i < 10; i++) {
-            model_transform = model_transform.times(Mat4.translation(0, 2, 0));
             for (let j = 0; j < 10; j++) {
-                model_transform = model_transform.times(Mat4.translation(2, 0, 0));
-                // this.shapes.squareoutline3.draw(context, program_state, model_transform, this.white,"LINES");
-            }
-            model_transform = model_transform.times(Mat4.translation(-20, 0, 0));
-        }
-        model_transform = model_transform.times(Mat4.translation(0, -20, -20));
-        for (let i = 0; i < 10; i++) {
-            model_transform = model_transform.times(Mat4.translation(0, 2, 0));
-            for (let j = 0; j < 10; j++) {
-                model_transform = model_transform.times(Mat4.translation(2, 0, 0));
                 this.shapes.squareoutline3.draw(context, program_state, model_transform, this.white, "LINES");
+                model_transform = model_transform.times(Mat4.translation(0, 2, 0));
             }
-            model_transform = model_transform.times(Mat4.translation(-20, 0, 0));
+            model_transform = model_transform.times(Mat4.translation(2, -20, 0));
         }
     }
 
@@ -370,12 +367,10 @@ export class blockbussin extends Scene {
         score.innerHTML = this.score;
     }
 
-
-
     restart() {
         var element = document.getElementById("startDisplay");
-        if (element) {element.parentNode.removeChild(element)};
-        
+        if (element) { element.parentNode.removeChild(element) };
+
         // set score to 0
         this.score = 0;
 
@@ -383,202 +378,12 @@ export class blockbussin extends Scene {
         this.current_block = null;
         this.current_rotations = Mat4.identity();
         this.current_translations = Mat4.translation(INIT_X, INIT_Y, INIT_Z);
-        this.current_transform = Mat4.translation(INIT_X, INIT_Y, INIT_Z);
 
         // sets camera location
-        this.initial_camera_location =  Mat4.look_at(vec3(-35, 20, 45), vec3(10, 0, 0), vec3(0, 1, 0));
-        const range = new Array(10).fill([0,hex_color("#ff10f0")]);
+        this.initial_camera_location = Mat4.look_at(vec3(50, 50, 50), vec3(0, 0, 0), vec3(0, 1, 0));
+        const range = new Array(10).fill(-1);
         this.game_blocks = range.map(e => range.map(e => range.map(e => e)));
     }
 
-}
-
-
-class Gouraud_Shader extends Shader {
-    // This is a Shader using Phong_Shader as template
-    // TODO: Modify the glsl coder here to create a Gouraud Shader (Planet 2)
-
-    constructor(num_lights = 2) {
-        super();
-        this.num_lights = num_lights;
-    }
-
-    shared_glsl_code() {
-        // ********* SHARED CODE, INCLUDED IN BOTH SHADERS *********
-        return ` 
-        precision mediump float;
-        const int N_LIGHTS = ` + this.num_lights + `;
-        uniform float ambient, diffusivity, specularity, smoothness;
-        uniform vec4 light_positions_or_vectors[N_LIGHTS], light_colors[N_LIGHTS];
-        uniform float light_attenuation_factors[N_LIGHTS];
-        uniform vec4 shape_color;
-        uniform vec3 squared_scale, camera_center;
-
-        // Specifier "varying" means a variable's final value will be passed from the vertex shader
-        // on to the next phase (fragment shader), then interpolated per-fragment, weighted by the
-        // pixel fragment's proximity to each of the 3 vertices (barycentric interpolation).
-        varying vec3 N, vertex_worldspace;
-        // ***** PHONG SHADING HAPPENS HERE: *****                                       
-        vec3 phong_model_lights( vec3 N, vec3 vertex_worldspace ){                                        
-            // phong_model_lights():  Add up the lights' contributions.
-            vec3 E = normalize( camera_center - vertex_worldspace );
-            vec3 result = vec3( 0.0 );
-            for(int i = 0; i < N_LIGHTS; i++){
-                // Lights store homogeneous coords - either a position or vector.  If w is 0, the 
-                // light will appear directional (uniform direction from all points), and we 
-                // simply obtain a vector towards the light by directly using the stored value.
-                // Otherwise if w is 1 it will appear as a point light -- compute the vector to 
-                // the point light's location from the current surface point.  In either case, 
-                // fade (attenuate) the light as the vector needed to reach it gets longer.  
-                vec3 surface_to_light_vector = light_positions_or_vectors[i].xyz - 
-                                               light_positions_or_vectors[i].w * vertex_worldspace;                                             
-                float distance_to_light = length( surface_to_light_vector );
-
-                vec3 L = normalize( surface_to_light_vector );
-                vec3 H = normalize( L + E );
-                // Compute the diffuse and specular components from the Phong
-                // Reflection Model, using Blinn's "halfway vector" method:
-                float diffuse  =      max( dot( N, L ), 0.0 );
-                float specular = pow( max( dot( N, H ), 0.0 ), smoothness );
-                float attenuation = 1.0 / (1.0 + light_attenuation_factors[i] * distance_to_light * distance_to_light );
-                
-                vec3 light_contribution = shape_color.xyz * light_colors[i].xyz * diffusivity * diffuse
-                                                          + light_colors[i].xyz * specularity * specular;
-                result += attenuation * light_contribution;
-            }
-            return result;
-        } `;
-    }
-
-    vertex_glsl_code() {
-        // ********* VERTEX SHADER *********
-        return this.shared_glsl_code() + `
-            attribute vec3 position, normal;                            
-            // Position is expressed in object coordinates.
-            
-            uniform mat4 model_transform;
-            uniform mat4 projection_camera_model_transform;
-    
-            void main(){                                                                   
-                // The vertex's final resting place (in NDCS):
-                gl_Position = projection_camera_model_transform * vec4( position, 1.0 );
-                // The final normal vector in screen space.
-                N = normalize( mat3( model_transform ) * normal / squared_scale);
-                vertex_worldspace = ( model_transform * vec4( position, 1.0 ) ).xyz;
-            } `;
-    }
-
-    fragment_glsl_code() {
-        // ********* FRAGMENT SHADER *********
-        // A fragment is a pixel that's overlapped by the current triangle.
-        // Fragments affect the final image or get discarded due to depth.
-        return this.shared_glsl_code() + `
-            void main(){                                                           
-                // Compute an initial (ambient) color:
-                gl_FragColor = vec4( shape_color.xyz * ambient, shape_color.w );
-                // Compute the final color with contributions from lights:
-                gl_FragColor.xyz += phong_model_lights( normalize( N ), vertex_worldspace );
-            } `;
-    }
-
-    send_material(gl, gpu, material) {
-        // send_material(): Send the desired shape-wide material qualities to the
-        // graphics card, where they will tweak the Phong lighting formula.
-        gl.uniform4fv(gpu.shape_color, material.color);
-        gl.uniform1f(gpu.ambient, material.ambient);
-        gl.uniform1f(gpu.diffusivity, material.diffusivity);
-        gl.uniform1f(gpu.specularity, material.specularity);
-        gl.uniform1f(gpu.smoothness, material.smoothness);
-    }
-
-    send_gpu_state(gl, gpu, gpu_state, model_transform) {
-        // send_gpu_state():  Send the state of our whole drawing context to the GPU.
-        const O = vec4(0, 0, 0, 1), camera_center = gpu_state.camera_transform.times(O).to3();
-        gl.uniform3fv(gpu.camera_center, camera_center);
-        // Use the squared scale trick from "Eric's blog" instead of inverse transpose matrix:
-        const squared_scale = model_transform.reduce(
-            (acc, r) => {
-                return acc.plus(vec4(...r).times_pairwise(r))
-            }, vec4(0, 0, 0, 0)).to3();
-        gl.uniform3fv(gpu.squared_scale, squared_scale);
-        // Send the current matrices to the shader.  Go ahead and pre-compute
-        // the products we'll need of the of the three special matrices and just
-        // cache and send those.  They will be the same throughout this draw
-        // call, and thus across each instance of the vertex shader.
-        // Transpose them since the GPU expects matrices as column-major arrays.
-        const PCM = gpu_state.projection_transform.times(gpu_state.camera_inverse).times(model_transform);
-        gl.uniformMatrix4fv(gpu.model_transform, false, Matrix.flatten_2D_to_1D(model_transform.transposed()));
-        gl.uniformMatrix4fv(gpu.projection_camera_model_transform, false, Matrix.flatten_2D_to_1D(PCM.transposed()));
-
-        // Omitting lights will show only the material color, scaled by the ambient term:
-        if (!gpu_state.lights.length)
-            return;
-
-        const light_positions_flattened = [], light_colors_flattened = [];
-        for (let i = 0; i < 4 * gpu_state.lights.length; i++) {
-            light_positions_flattened.push(gpu_state.lights[Math.floor(i / 4)].position[i % 4]);
-            light_colors_flattened.push(gpu_state.lights[Math.floor(i / 4)].color[i % 4]);
-        }
-        gl.uniform4fv(gpu.light_positions_or_vectors, light_positions_flattened);
-        gl.uniform4fv(gpu.light_colors, light_colors_flattened);
-        gl.uniform1fv(gpu.light_attenuation_factors, gpu_state.lights.map(l => l.attenuation));
-    }
-
-    update_GPU(context, gpu_addresses, gpu_state, model_transform, material) {
-        // update_GPU(): Define how to synchronize our JavaScript's variables to the GPU's.  This is where the shader
-        // recieves ALL of its inputs.  Every value the GPU wants is divided into two categories:  Values that belong
-        // to individual objects being drawn (which we call "Material") and values belonging to the whole scene or
-        // program (which we call the "Program_State").  Send both a material and a program state to the shaders
-        // within this function, one data field at a time, to fully initialize the shader for a draw.
-
-        // Fill in any missing fields in the Material object with custom defaults for this shader:
-        const defaults = { color: color(0, 0, 0, 1), ambient: 0, diffusivity: 1, specularity: 1, smoothness: 40 };
-        material = Object.assign({}, defaults, material);
-
-        this.send_material(context, gpu_addresses, material);
-        this.send_gpu_state(context, gpu_addresses, gpu_state, model_transform);
-    }
-}
-
-class Ring_Shader extends Shader {
-    update_GPU(context, gpu_addresses, graphics_state, model_transform, material) {
-        // update_GPU():  Defining how to synchronize our JavaScript's variables to the GPU's:
-        const [P, C, M] = [graphics_state.projection_transform, graphics_state.camera_inverse, model_transform],
-            PCM = P.times(C).times(M);
-        context.uniformMatrix4fv(gpu_addresses.model_transform, false, Matrix.flatten_2D_to_1D(model_transform.transposed()));
-        context.uniformMatrix4fv(gpu_addresses.projection_camera_model_transform, false,
-            Matrix.flatten_2D_to_1D(PCM.transposed()));
-    }
-
-    shared_glsl_code() {
-        // ********* SHARED CODE, INCLUDED IN BOTH SHADERS *********
-        return `
-        precision mediump float;
-        varying vec4 point_position;
-        varying vec4 center;
-        `;
-    }
-
-    vertex_glsl_code() {
-        // ********* VERTEX SHADER *********
-        // TODO:  Complete the main function of the vertex shader (Extra Credit Part II).
-        return this.shared_glsl_code() + `
-        attribute vec3 position;
-        uniform mat4 model_transform;
-        uniform mat4 projection_camera_model_transform;
-        
-        void main(){
-          
-        }`;
-    }
-
-    fragment_glsl_code() {
-        // ********* FRAGMENT SHADER *********
-        // TODO:  Complete the main function of the fragment shader (Extra Credit Part II).
-        return this.shared_glsl_code() + `
-        void main(){
-          
-        }`;
-    }
 }
 

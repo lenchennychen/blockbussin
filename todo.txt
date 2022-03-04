@@ -3,7 +3,7 @@ How se0ngbin thinks we should do stuff:
 10x10 grid, so we need 100 queues --> https://www.javascripttutorial.net/javascript-queue/
 Game over when length of one queue exceeds a certain number
 
-Store queues in 10x10 array named occupied[][]
+Store arrays in 10x10 array named occupied[][]
 
 let final_transf = 1000000; // just some huge number
 for each cube in tetris block
@@ -18,6 +18,6 @@ for each cube in tetris block
 translate block by final_transf in y direction
 push 0's and 1's appropriately to queues --> idea: just use final coordinates of block
 											--> we then need to make edge of grid at (0,0,0) to make it easier
-store block data (final transformation matrix, color) somewhere
+store block color somewhere
 
 
