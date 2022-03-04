@@ -5,7 +5,7 @@ const {
 } = tiny;
 
 const INIT_X = 10;
-const INIT_Y = 20;
+const INIT_Y = 30;
 const INIT_Z = 10;
 
 
@@ -214,7 +214,6 @@ export class blockbussin extends Scene {
         for (const element of cur_trans) {
             model_transform = this.getBlock(model_transform, element);
             let m = Matrix.flatten_2D_to_1D(model_transform);
-            // console.log(m);
             if (m[3] > 18 || m[11] < 0 || m[3] < 0 || m[11] > 18) {
                 return false;
             }
@@ -229,46 +228,35 @@ export class blockbussin extends Scene {
     getBlockCoords(temp_matrix) {
         let model_transform = this.combineRandT(this.current_rotations, this.current_translations);
         let m = temp_matrix.times(vec4(0, 0, 0, 1))
-        console.log(m);
         m = model_transform.times(m);
         let x = (m[0] | 0) / 2;
         let y = m[1] / 2;
-        let z = m[2] / 2;
+        let z = (m[2] | 0) / 2;
         return [x,y,z];
     }
 
 
-    //TODO: figure out how to pass context and program state, along with checking if blocks are too far down then adding them to gameblocks matrix
     dropBlock() {
         const cur_trans = this.transformations[this.current_block];
-        
-        // let temp_transform2 = temp_transform1.times(Mat4.translation(2*i,2*j,2*k));
-        // this.shapes.cube.draw(context, program_state, temp_transform1, this.materials.test);
-        //console.log(temp_transform);
-        /*let translatedown = -20;
-        for (const element of cur_trans) {
-            model_transform = this.getBlock(model_transform, element);
-            let m = Matrix.flatten_2D_to_1D(model_transform);
-            while (m[7] + translatedown < -10) {
-                translatedown += 2;
-            }
-            //console.log(m[3], m[7], m[11]);
-            //console.log(model_transform);
-        }*/
-
+        let curr_coordinates = [];
 
         let y_drop = 20;
         let i = 0;
-        let curr_coordinates = [];
         let temp_matrix = Mat4.identity();
         for (const element of cur_trans) {
             temp_matrix = this.getBlock(temp_matrix, element)
             curr_coordinates[i] = this.getBlockCoords(temp_matrix);
             let current_array = this.game_blocks[curr_coordinates[i][0]][curr_coordinates[i][2]];
+            console.log(curr_coordinates[i]);
 
             // TODO: doesn't account for gaps
             // we need to find last index of non neg number + 1
-            let new_y = current_array.indexOf(-1);
+            let new_y = 9;
+            while (current_array[new_y] === -1) {
+                new_y--;
+            }
+            new_y++;
+
             let y_transf = curr_coordinates[i][1] - new_y;
             if (y_drop > y_transf) { y_drop = y_transf; }
             i++;
