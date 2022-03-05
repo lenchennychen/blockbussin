@@ -4,6 +4,10 @@ const {
     Vector, Vector3, vec, vec3, vec4, color, hex_color, Shader, Matrix, Mat4, Light, Shape, Material, Scene, Cube
 } = tiny;
 
+// game field height + height of tallest block
+// this way the block causing the player to lose is displayed before game ends
+const MAX_HEIGHT = 14;
+
 const INIT_X = 10;
 const INIT_Y = 30;
 const INIT_Z = 10;
@@ -69,11 +73,11 @@ export class blockbussin extends Scene {
         ['N', 'R', 'R', 'T'],
         ['N', 'D', 'D', 'R']];
         this.colors = [
-            hex_color("#ff10f0"),
-            hex_color("#8810f0"),
-            hex_color("#691428"),
-            hex_color("#f69d28"),
-            hex_color("#d64285")
+            hex_color("#4deeea"),
+            hex_color("#74ee15"),
+            hex_color("#ffe700"),
+            hex_color("#f000ff"),
+            hex_color("#ff5733")
         ]
 
         // At the beginning of our program, load one of each of these shape definitions onto the GPU.
@@ -91,12 +95,13 @@ export class blockbussin extends Scene {
 
         // *** Materials
         this.materials = {
-            test: new Material(new defs.Phong_Shader(),
-                { ambient: .4, diffusivity: .6, color: hex_color("#ff10f0") }),
-            plastic: new Material(new defs.Phong_Shader(),
-                { ambient: .4, diffusivity: .6, color: hex_color("#ffffff"), }),
+            cube: new Material(new defs.Phong_Shader(),
+                { ambient: 0.9, diffusivity: .6, color: hex_color("#ff10f0") }),
         }
         this.white = new Material(new defs.Basic_Shader());
+
+        // set gameOver to false
+        this.gameOver = false;
 
         // set score to 0
         this.score = 0;
@@ -110,7 +115,7 @@ export class blockbussin extends Scene {
         this.initial_camera_location = Mat4.look_at(vec3(50, 50, 50), vec3(0, 0, 0), vec3(0, 1, 0));
 
         //sets game blocks
-        const range = new Array(10).fill(-1);
+        const range = new Array(MAX_HEIGHT).fill(-1);
         this.game_blocks = range.map(e => range.map(e => range.map(e => e)));
 
         //temporary before drop block function just to visualize
@@ -136,7 +141,7 @@ export class blockbussin extends Scene {
         // forward = away
         this.key_triggered_button("Translate forward", ["i"], () => this.checkMove('i'));
         this.key_triggered_button("Translate backward", ["k"], () => this.checkMove('k'));
-        this.key_triggered_button("Drop Block", [" "], () => this.dropBlock());
+        this.key_triggered_button("Drop Block", [" "], () => {if (!this.gameOver) {this.dropBlock()}});
         this.key_triggered_button("Restart", ["g"], () => this.restart());
     }
 
@@ -168,7 +173,7 @@ export class blockbussin extends Scene {
         for (const element of cur_trans) {
             model_transform = this.getBlock(model_transform, element);
             this.shapes.cubeoutline.draw(context, program_state, model_transform, this.white, "LINES");
-            this.shapes.cube.draw(context, program_state, model_transform, this.materials.test.override({ color: this.colors[this.current_block] }));
+            this.shapes.cube.draw(context, program_state, model_transform, this.materials.cube.override({ color: this.colors[this.current_block] }));
         }
 
         this.drawgamefield(context, program_state);
@@ -262,27 +267,31 @@ export class blockbussin extends Scene {
             i++;
         }
 
-
         for (const n of curr_coordinates) {
             //console.log(n[0], n[2], n[1]-y_drop);
             //console.log(this.game_blocks[n[0]][n[2]][n[1]-y_drop]);
+            console.log("ydrop: "+y_drop);
             this.game_blocks[n[0]][n[2]][n[1] - y_drop] = this.current_block;
+            if(y_drop < 6) {
+                this.gameOver = true;
+            }
         }
 
         this.current_block = null;
         this.current_rotations = Mat4.identity();
         this.current_translations = Mat4.translation(INIT_X, INIT_Y, INIT_Z);
+
     }
 
     drawgameblocks(context, program_state) {
-        for (var i = 0; i < 10; i++) {
-            for (var j = 0; j < 10; j++) {
-                for (var k = 0; k < 10; k++) {
+        for (var i = 0; i < MAX_HEIGHT; i++) {
+            for (var j = 0; j < MAX_HEIGHT; j++) {
+                for (var k = 0; k < MAX_HEIGHT; k++) {
                     if (this.game_blocks[i][j][k] != -1) {
                         //console.log(this.game_blocks[i][j][k]);
                         let model_transform = Mat4.translation(2 * i, 2 * k, 2 * j);
                         this.shapes.cubeoutline.draw(context, program_state, model_transform, this.white, "LINES");
-                        this.shapes.cube.draw(context, program_state, model_transform, this.materials.test.override({ color: this.colors[this.game_blocks[i][j][k]] }));
+                        this.shapes.cube.draw(context, program_state, model_transform, this.materials.cube.override({ color: this.colors[this.game_blocks[i][j][k]] }));
                     }
                 }
             }
@@ -353,11 +362,20 @@ export class blockbussin extends Scene {
     displayUI() {
         var score = document.getElementById("score");
         score.innerHTML = this.score;
+        var gameOver = document.getElementById("gameOver");
+        if(this.gameOver) {
+              gameOver.innerHTML = "Game Over. Press (g) to play again";
+        } else {
+            gameOver.innerHTML = "";
+        }
     }
 
     restart() {
         var element = document.getElementById("startDisplay");
         if (element) { element.parentNode.removeChild(element) };
+
+        // set gameOver to false
+        this.gameOver = false;
 
         // set score to 0
         this.score = 0;
@@ -369,7 +387,7 @@ export class blockbussin extends Scene {
 
         // sets camera location
         this.initial_camera_location = Mat4.look_at(vec3(50, 50, 50), vec3(0, 0, 0), vec3(0, 1, 0));
-        const range = new Array(10).fill(-1);
+        const range = new Array(MAX_HEIGHT).fill(-1);
         this.game_blocks = range.map(e => range.map(e => range.map(e => e)));
     }
 
