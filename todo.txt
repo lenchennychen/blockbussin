@@ -1,4 +1,4 @@
-first of all the draw game function (or whatever the grid drawing one is) was easily the most illegible code i read this year... since this is a group project, comments and legibility would be highly appreciated.
+first of all one of the functions i fixed  was easily the most illegible code i read this year... since this is a group project, comments and legibility would be highly appreciated.
 
 i centered the floor at 0,0,0 and the field goes from 0~20 on both x and z directions to make it easier to implement the collision detection grid.
 i changed the inital camera location as well
