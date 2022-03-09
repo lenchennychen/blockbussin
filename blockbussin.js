@@ -106,6 +106,9 @@ export class blockbussin extends Scene {
         // set score to 0
         this.score = 0;
 
+        // set block currently dropping to false
+        this.dropping = false;
+
         // state stores information about the current block type and transformations
         this.current_block = null;
         this.current_rotations = Mat4.identity();
@@ -133,15 +136,15 @@ export class blockbussin extends Scene {
     make_control_panel() {
         // Buttons, can also probably make trigger for keyboard keys
         this.new_line();
-        this.key_triggered_button("Rotate Around x-axis", ["a"], () => this.checkMove('a'));
-        this.key_triggered_button("Rotate Around y-axis", ["s"], () => this.checkMove('s'));
-        this.key_triggered_button("Rotate Around z-axis", ["d"], () => this.checkMove('d'));
-        this.key_triggered_button("Translate right", ["l"], () => this.checkMove('l'));
-        this.key_triggered_button("Translate left", ["j"], () => this.checkMove('j'));
+        this.key_triggered_button("Rotate Around x-axis", ["a"], () => {if (!this.dropping) {this.checkMove('a')}});
+        this.key_triggered_button("Rotate Around y-axis", ["s"], () => {if (!this.dropping) {this.checkMove('s')}});
+        this.key_triggered_button("Rotate Around z-axis", ["d"], () => {if (!this.dropping) {this.checkMove('d')}});
+        this.key_triggered_button("Translate right", ["l"], () => {if (!this.dropping) {this.checkMove('l')}});
+        this.key_triggered_button("Translate left", ["j"], () => {if (!this.dropping) {this.checkMove('j')}});
         // forward = away
-        this.key_triggered_button("Translate forward", ["i"], () => this.checkMove('i'));
-        this.key_triggered_button("Translate backward", ["k"], () => this.checkMove('k'));
-        this.key_triggered_button("Drop Block", [" "], () => {if (!this.gameOver) {this.dropBlock()}});
+        this.key_triggered_button("Translate forward", ["i"], () => {if (!this.dropping) {this.checkMove('i')}});
+        this.key_triggered_button("Translate backward", ["k"], () => {if (!this.dropping) {this.checkMove('k')}});
+        this.key_triggered_button("Drop Block", [" "], () => {if (!this.gameOver && !this.dropping) {this.dropBlock()}});
         this.key_triggered_button("Restart", ["g"], () => this.restart());
     }
 
@@ -241,7 +244,7 @@ export class blockbussin extends Scene {
     }
 
 
-    dropBlock() {
+    async dropBlock() {
         const cur_trans = this.transformations[this.current_block];
         let curr_coordinates = [];
 
@@ -267,20 +270,34 @@ export class blockbussin extends Scene {
             i++;
         }
 
-        for (const n of curr_coordinates) {
-            //console.log(n[0], n[2], n[1]-y_drop);
-            //console.log(this.game_blocks[n[0]][n[2]][n[1]-y_drop]);
-            console.log("ydrop: "+y_drop);
-            this.game_blocks[n[0]][n[2]][n[1] - y_drop] = this.current_block;
-            if(y_drop < 6) {
-                this.gameOver = true;
+        if(y_drop < 6) {
+            this.gameOver = true;
+        } else {
+            // in dropping mode
+            this.dropping = true;
+            // for every unit we drop in y-direction
+            for(var cur_y_drop=0; cur_y_drop<=y_drop; cur_y_drop++) {
+                // mark dropping block in game_blocks
+                for (const n of curr_coordinates) {
+                    this.game_blocks[n[0]][n[2]][n[1] - cur_y_drop] = this.current_block;
+                }
+                // render above block for 200 ms
+                await new Promise(resolve => setTimeout(resolve, 200));
+                // unmark dropping block in game_blocks
+                for (const n of curr_coordinates) {
+                    this.game_blocks[n[0]][n[2]][n[1] - cur_y_drop] = -1;
+                }
             }
+            // mark dropped block in game_blocks so drawgameblocks now always renders it
+            for (const n of curr_coordinates) {
+                this.game_blocks[n[0]][n[2]][n[1] - y_drop] = this.current_block;
+            }
+            // exit dropping mode
+            this.dropping = false;
+            this.current_block = null;
+            this.current_rotations = Mat4.identity();
+            this.current_translations = Mat4.translation(INIT_X, INIT_Y, INIT_Z);
         }
-
-        this.current_block = null;
-        this.current_rotations = Mat4.identity();
-        this.current_translations = Mat4.translation(INIT_X, INIT_Y, INIT_Z);
-
     }
 
     drawgameblocks(context, program_state) {
