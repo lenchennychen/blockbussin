@@ -4,9 +4,10 @@ const {
     Vector, Vector3, vec, vec3, vec4, color, hex_color, Shader, Matrix, Mat4, Light, Shape, Material, Scene, Cube
 } = tiny;
 
-// game field height + height of tallest block
+// game field height + padding
 // this way the block causing the player to lose is displayed before game ends
-const MAX_HEIGHT = 14;
+// + the dropping animation displays the block correctly
+const MAX_HEIGHT = 20;
 
 const INIT_X = 10;
 const INIT_Y = 30;
@@ -82,8 +83,6 @@ export class blockbussin extends Scene {
 
         // At the beginning of our program, load one of each of these shape definitions onto the GPU.
         this.shapes = {
-            torus: new defs.Torus(15, 15),
-            torus2: new defs.Torus(3, 15),
             sphere: new defs.Subdivision_Sphere(4),
             circle: new defs.Regular_2D_Polygon(1, 15),
             cube: new defs.Cube(),
@@ -171,12 +170,14 @@ export class blockbussin extends Scene {
             this.current_block = Math.floor(Math.random() * 5);
         }
 
-        const cur_trans = this.transformations[this.current_block];
-        let model_transform = this.combineRandT(this.current_rotations, this.current_translations);
-        for (const element of cur_trans) {
-            model_transform = this.getBlock(model_transform, element);
-            this.shapes.cubeoutline.draw(context, program_state, model_transform, this.white, "LINES");
-            this.shapes.cube.draw(context, program_state, model_transform, this.materials.cube.override({ color: this.colors[this.current_block] }));
+        if(!this.dropping && !this.gameOver) {
+            const cur_trans = this.transformations[this.current_block];
+            let model_transform = this.combineRandT(this.current_rotations, this.current_translations);
+            for (const element of cur_trans) {
+                model_transform = this.getBlock(model_transform, element);
+                this.shapes.cubeoutline.draw(context, program_state, model_transform, this.white, "LINES");
+                this.shapes.cube.draw(context, program_state, model_transform, this.materials.cube.override({ color: this.colors[this.current_block] }));
+            }
         }
 
         this.drawgamefield(context, program_state);
@@ -270,33 +271,34 @@ export class blockbussin extends Scene {
             i++;
         }
 
+        // in dropping mode
+        this.dropping = true;
+        // for every unit we drop in y-direction
+        for(var cur_y_drop=0; cur_y_drop<=y_drop; cur_y_drop++) {
+            // mark dropping block in game_blocks
+            for (const n of curr_coordinates) {
+                this.game_blocks[n[0]][n[2]][n[1] - cur_y_drop] = this.current_block;
+            }
+            // render above block for 200 ms
+            await new Promise(resolve => setTimeout(resolve, 200));
+            // unmark dropping block in game_blocks
+            for (const n of curr_coordinates) {
+                this.game_blocks[n[0]][n[2]][n[1] - cur_y_drop] = -1;
+            }
+        }
+        // mark dropped block in game_blocks so drawgameblocks now always renders it
+        for (const n of curr_coordinates) {
+            this.game_blocks[n[0]][n[2]][n[1] - y_drop] = this.current_block;
+        }
+        // exit dropping mode
+        this.dropping = false;
+
         if(y_drop < 6) {
             this.gameOver = true;
         } else {
-            // in dropping mode
-            this.dropping = true;
-            // for every unit we drop in y-direction
-            for(var cur_y_drop=0; cur_y_drop<=y_drop; cur_y_drop++) {
-                // mark dropping block in game_blocks
-                for (const n of curr_coordinates) {
-                    this.game_blocks[n[0]][n[2]][n[1] - cur_y_drop] = this.current_block;
-                }
-                // render above block for 200 ms
-                await new Promise(resolve => setTimeout(resolve, 200));
-                // unmark dropping block in game_blocks
-                for (const n of curr_coordinates) {
-                    this.game_blocks[n[0]][n[2]][n[1] - cur_y_drop] = -1;
-                }
-            }
-            // mark dropped block in game_blocks so drawgameblocks now always renders it
-            for (const n of curr_coordinates) {
-                this.game_blocks[n[0]][n[2]][n[1] - y_drop] = this.current_block;
-            }
-            // exit dropping mode
-            this.dropping = false;
             this.current_block = null;
             this.current_rotations = Mat4.identity();
-            this.current_translations = Mat4.translation(INIT_X, INIT_Y, INIT_Z);
+            this.current_translations = Mat4.translation(INIT_X, INIT_Y, INIT_Z); 
         }
     }
 
