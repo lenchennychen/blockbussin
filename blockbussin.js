@@ -132,7 +132,7 @@ export class blockbussin extends Scene {
         // forward = away
         this.key_triggered_button("Translate forward", ["i"], () => {if (!this.dropping) {this.checkMove('i')}});
         this.key_triggered_button("Translate backward", ["k"], () => {if (!this.dropping) {this.checkMove('k')}});
-        this.key_triggered_button("Drop Block", [" "], () => {if (!this.gameOver && !this.dropping) {this.dropBlock()}});
+        this.key_triggered_button("Drop Block", [" "], () => {if (!this.gameOver && !this.dropping) {this.dropBlock(this.yDrop())}});
         this.key_triggered_button("Restart", ["g"], () => this.restart());
     }
 
@@ -159,13 +159,21 @@ export class blockbussin extends Scene {
             this.current_block = Math.floor(Math.random() * 5);
         }
 
+        // if the current block is not dropping and the game isn't over, display the new current block and it's shadow
         if(!this.dropping && !this.gameOver) {
             const cur_trans = this.transformations[this.current_block];
-            let model_transform = this.combineRandT(this.current_rotations, this.current_translations);
+            const y_drop = this.yDrop();
+            let model_transform_main = this.combineRandT(this.current_rotations, this.current_translations);
+            let model_transform_shadow = this.combineRandT(this.current_rotations,  Mat4.translation(0, y_drop*-2, 0).times(this.current_translations));
             for (const element of cur_trans) {
-                model_transform = this.getBlock(model_transform, element);
-                this.shapes.cubeoutline.draw(context, program_state, model_transform, this.white, "LINES");
-                this.shapes.cube.draw(context, program_state, model_transform, this.materials.cube.override({ color: this.colors[this.current_block] }));
+                // current block
+                model_transform_main = this.getBlock(model_transform_main, element);
+                this.shapes.cubeoutline.draw(context, program_state, model_transform_main, this.white, "LINES");
+                this.shapes.cube.draw(context, program_state, model_transform_main, this.materials.cube.override({ color: this.colors[this.current_block] }));
+                // current block shadow
+                model_transform_shadow = this.getBlock(model_transform_shadow, element);
+                this.shapes.cubeoutline.draw(context, program_state, model_transform_shadow, this.white, "LINES");
+                this.shapes.cube.draw(context, program_state, model_transform_shadow, this.materials.cube.override({ color: color(1,1,1,1) }));
             }
         }
 
@@ -206,8 +214,6 @@ export class blockbussin extends Scene {
         const cur_trans = this.transformations[this.current_block];
         let model_transform = this.combineRandT(model_rotate, model_translate);
 
-        // console.log(this.combineRandT(this.current_rotations, this.current_translations))
-
         // out of bounds
         for (const element of cur_trans) {
             model_transform = this.getBlock(model_transform, element);
@@ -233,20 +239,27 @@ export class blockbussin extends Scene {
         return [x,y,z];
     }
 
-
-    async dropBlock() {
+    currCoords() {
         const cur_trans = this.transformations[this.current_block];
-        let curr_coordinates = [];
-
-        let y_drop = 20;
+        let curr_coordinates = [];     
+        let temp_matrix = Mat4.identity(); 
         let i = 0;
-        let temp_matrix = Mat4.identity();
         for (const element of cur_trans) {
             temp_matrix = this.getBlock(temp_matrix, element)
             curr_coordinates[i] = this.getBlockCoords(temp_matrix);
-            let current_array = this.game_blocks[curr_coordinates[i][0]][curr_coordinates[i][2]];
-            console.log(curr_coordinates[i]);
+            i++;
+        }
+        return curr_coordinates;
+    }
 
+    yDrop() {
+        let y_drop = 20;
+        const curr_coordinates = this.currCoords();
+
+        for (var i=0; i<4; i++) {
+            let current_array = this.game_blocks[curr_coordinates[i][0]][curr_coordinates[i][2]];
+            // TODO: doesn't account for gaps
+            // we need to find last index of non neg number + 1
             let new_y = 9;
             while (current_array[new_y] === -1) {
                 new_y--;
@@ -255,11 +268,14 @@ export class blockbussin extends Scene {
 
             let y_transf = curr_coordinates[i][1] - new_y;
             if (y_drop > y_transf) { y_drop = y_transf; }
-            i++;
         }
+        return y_drop;
+    }
 
+    async dropBlock(y_drop) {
         // in dropping mode
         this.dropping = true;
+        const curr_coordinates = this.currCoords();
         // for every unit we drop in y-direction
         for(var cur_y_drop=0; cur_y_drop<=y_drop; cur_y_drop++) {
             // mark dropping block in game_blocks
@@ -294,10 +310,9 @@ export class blockbussin extends Scene {
             for (var j = 0; j < MAX_HEIGHT; j++) {
                 for (var k = 0; k < MAX_HEIGHT; k++) {
                     if (this.game_blocks[i][j][k] != -1) {
-                        //console.log(this.game_blocks[i][j][k]);
                         let model_transform = Mat4.translation(2 * i, 2 * k, 2 * j);
                         this.shapes.cubeoutline.draw(context, program_state, model_transform, this.white, "LINES");
-                        this.shapes.cube.draw(context, program_state, model_transform, this.materials.cube.override({ color: this.colors[this.game_blocks[i][j][k]] }));
+                        this.shapes.cube.draw(context, program_state, model_transform, this.materials.cube.override({ color: this.colors[this.game_blocks[i][j][k]]}));
                     }
                 }
             }
