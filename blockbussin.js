@@ -114,6 +114,7 @@ export class blockbussin extends Scene {
         this.current_block = null;
         this.current_rotations = Mat4.identity();
         this.current_translations = Mat4.translation(INIT_X, INIT_Y, INIT_Z);
+        this.draw_walls = [true,true,false,false];
 
         // sets camera location
         this.initial_camera_location = Mat4.look_at(vec3(50, 50, 50), vec3(0, 0, 0), vec3(0, 1, 0));
@@ -136,6 +137,20 @@ export class blockbussin extends Scene {
         this.key_triggered_button("Translate backward", ["k"], () => { if (!this.dropping) { this.checkMove('k') } });
         this.key_triggered_button("Drop Block", [" "], () => { if (!this.gameOver && !this.dropping) { this.dropBlock(this.yDrop()) } });
         this.key_triggered_button("Restart", ["g"], () => this.restart());
+        //draw choice walls depending on camera angle also modified in common.js
+        this.key_triggered_button("Look at origin from front", ["1"], () => {
+            this.draw_walls = [true,true,false,false];
+        }, "#8B8885");
+        this.new_line();
+        this.key_triggered_button("from right", ["2"], () => {
+            this.draw_walls = [false,true,true,false];
+        }, "#8B8885");
+        this.key_triggered_button("from rear", ["3"], () => {
+            this.draw_walls = [false,false,true,true];
+        }, "#8B8885");
+        this.key_triggered_button("from left", ["4"], () => {
+            this.draw_walls = [true,false,false,true];
+        }, "#8B8885");
     }
 
     display(context, program_state) {
@@ -143,7 +158,7 @@ export class blockbussin extends Scene {
         // Setup -- This part sets up the scene's overall camera matrix, projection matrix, and lights:
         if (!context.scratchpad.controls) {
             // don't uncomment camera controls until key overlap issue is fixed (TODO)
-            // this.children.push(context.scratchpad.controls = new defs.Movement_Controls());
+            this.children.push(context.scratchpad.controls = new defs.Movement_Controls());
             // Define the global camera and projection matrices, which are stored in program_state.
             program_state.set_camera(this.initial_camera_location);
         }
@@ -341,6 +356,7 @@ export class blockbussin extends Scene {
                         }
                         this.game_blocks[i][j][9] = -1;
                     }
+                    this.score += 100;
                 }
             }
         }
@@ -353,8 +369,8 @@ export class blockbussin extends Scene {
                             this.game_blocks[i][j][x] = this.game_blocks[i][j][x+1];
                         }
                         this.game_blocks[i][j][9] = -1;
-
                     }
+                    this.score += 100;
                 }
             }
         }
@@ -383,6 +399,7 @@ export class blockbussin extends Scene {
         }
         // exit dropping mode
         this.dropping = false;
+        this.score += 10;
         // if a block is done dropping, then check to see if we have to clear a row
         if (!this.dropping) {
             this.checkClear()
@@ -453,7 +470,9 @@ export class blockbussin extends Scene {
         model_transform = Mat4.identity();
         for (let i = 0; i < 10; i++) {
             for (let j = 0; j < 10; j++) {
-                this.shapes.squareoutline2.draw(context, program_state, model_transform, this.white, "LINES");
+                if (this.draw_walls[0]){
+                    this.shapes.squareoutline2.draw(context, program_state, model_transform, this.white, "LINES");
+                }
                 model_transform = model_transform.times(Mat4.translation(0, 2, 0));
             }
             model_transform = model_transform.times(Mat4.translation(0, -20, 2));
@@ -463,7 +482,35 @@ export class blockbussin extends Scene {
         model_transform = Mat4.identity();
         for (let i = 0; i < 10; i++) {
             for (let j = 0; j < 10; j++) {
-                this.shapes.squareoutline3.draw(context, program_state, model_transform, this.white, "LINES");
+                if (this.draw_walls[1]){
+                    this.shapes.squareoutline3.draw(context, program_state, model_transform, this.white, "LINES");
+                }
+                model_transform = model_transform.times(Mat4.translation(0, 2, 0));
+            }
+            model_transform = model_transform.times(Mat4.translation(2, -20, 0));
+        }
+
+        // draw wall 3
+        model_transform = Mat4.identity();
+        model_transform = model_transform.times(Mat4.translation(20, 0, 0));
+        for (let i = 0; i < 10; i++) {
+            for (let j = 0; j < 10; j++) {
+                if (this.draw_walls[2]){
+                    this.shapes.squareoutline2.draw(context, program_state, model_transform, this.white, "LINES");
+                }
+                model_transform = model_transform.times(Mat4.translation(0, 0, 2));
+            }
+            model_transform = model_transform.times(Mat4.translation(0, 2, -20));
+        }
+
+        // draw wall 4
+        model_transform = Mat4.identity();
+        model_transform = model_transform.times(Mat4.translation(0, 0, 20));
+        for (let i = 0; i < 10; i++) {
+            for (let j = 0; j < 10; j++) {
+                if (this.draw_walls[3]){
+                    this.shapes.squareoutline3.draw(context, program_state, model_transform, this.white, "LINES");
+                }
                 model_transform = model_transform.times(Mat4.translation(0, 2, 0));
             }
             model_transform = model_transform.times(Mat4.translation(2, -20, 0));
