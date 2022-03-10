@@ -78,7 +78,8 @@ export class blockbussin extends Scene {
             hex_color("#74ee15"),
             hex_color("#ffe700"),
             hex_color("#f000ff"),
-            hex_color("#ff5733")
+            hex_color("#ff5733"),
+            hex_color("#ffffff")
         ]
 
         // At the beginning of our program, load one of each of these shape definitions onto the GPU.
@@ -108,6 +109,7 @@ export class blockbussin extends Scene {
         // set block currently dropping to false
         this.dropping = false;
 
+        this.row_clearing = false;
         // state stores information about the current block type and transformations
         this.current_block = null;
         this.current_rotations = Mat4.identity();
@@ -124,15 +126,15 @@ export class blockbussin extends Scene {
     make_control_panel() {
         // Buttons, can also probably make trigger for keyboard keys
         this.new_line();
-        this.key_triggered_button("Rotate Around x-axis", ["a"], () => {if (!this.dropping) {this.checkMove('a')}});
-        this.key_triggered_button("Rotate Around y-axis", ["s"], () => {if (!this.dropping) {this.checkMove('s')}});
-        this.key_triggered_button("Rotate Around z-axis", ["d"], () => {if (!this.dropping) {this.checkMove('d')}});
-        this.key_triggered_button("Translate right", ["l"], () => {if (!this.dropping) {this.checkMove('l')}});
-        this.key_triggered_button("Translate left", ["j"], () => {if (!this.dropping) {this.checkMove('j')}});
+        this.key_triggered_button("Rotate Around x-axis", ["a"], () => { if (!this.dropping) { this.checkMove('a') } });
+        this.key_triggered_button("Rotate Around y-axis", ["s"], () => { if (!this.dropping) { this.checkMove('s') } });
+        this.key_triggered_button("Rotate Around z-axis", ["d"], () => { if (!this.dropping) { this.checkMove('d') } });
+        this.key_triggered_button("Translate right", ["l"], () => { if (!this.dropping) { this.checkMove('l') } });
+        this.key_triggered_button("Translate left", ["j"], () => { if (!this.dropping) { this.checkMove('j') } });
         // forward = away
-        this.key_triggered_button("Translate forward", ["i"], () => {if (!this.dropping) {this.checkMove('i')}});
-        this.key_triggered_button("Translate backward", ["k"], () => {if (!this.dropping) {this.checkMove('k')}});
-        this.key_triggered_button("Drop Block", [" "], () => {if (!this.gameOver && !this.dropping) {this.dropBlock(this.yDrop())}});
+        this.key_triggered_button("Translate forward", ["i"], () => { if (!this.dropping) { this.checkMove('i') } });
+        this.key_triggered_button("Translate backward", ["k"], () => { if (!this.dropping) { this.checkMove('k') } });
+        this.key_triggered_button("Drop Block", [" "], () => { if (!this.gameOver && !this.dropping) { this.dropBlock(this.yDrop()) } });
         this.key_triggered_button("Restart", ["g"], () => this.restart());
     }
 
@@ -146,6 +148,7 @@ export class blockbussin extends Scene {
             program_state.set_camera(this.initial_camera_location);
         }
         this.displayUI();
+        const t = program_state.animation_time / 1000, dt = program_state.animation_delta_time / 1000;
 
         program_state.projection_transform = Mat4.perspective(
             Math.PI / 4, context.width / context.height, .1, 1000);
@@ -160,11 +163,11 @@ export class blockbussin extends Scene {
         }
 
         // if the current block is not dropping and the game isn't over, display the new current block and it's shadow
-        if(!this.dropping && !this.gameOver) {
+        if (!this.dropping && !this.gameOver) {
             const cur_trans = this.transformations[this.current_block];
             const y_drop = this.yDrop();
             let model_transform_main = this.combineRandT(this.current_rotations, this.current_translations);
-            let model_transform_shadow = this.combineRandT(this.current_rotations,  Mat4.translation(0, y_drop*-2, 0).times(this.current_translations));
+            let model_transform_shadow = this.combineRandT(this.current_rotations, Mat4.translation(0, y_drop * -2, 0).times(this.current_translations));
             for (const element of cur_trans) {
                 // current block
                 model_transform_main = this.getBlock(model_transform_main, element);
@@ -173,12 +176,17 @@ export class blockbussin extends Scene {
                 // current block shadow
                 model_transform_shadow = this.getBlock(model_transform_shadow, element);
                 this.shapes.cubeoutline.draw(context, program_state, model_transform_shadow, this.white, "LINES");
-                this.shapes.cube.draw(context, program_state, model_transform_shadow, this.materials.cube.override({ color: color(1,1,1,1) }));
+                // if dropping block ends game, flash the block red
+                if (y_drop < 6 && Math.floor(t * 4) % 2) {
+                    this.shapes.cube.draw(context, program_state, model_transform_shadow, this.materials.cube.override({ color: color(255, 0, 0, 1) }));
+                }
+                else {
+                    this.shapes.cube.draw(context, program_state, model_transform_shadow, this.materials.cube.override({ color: color(1, 1, 1, 1) }));
+                }
             }
         }
 
         this.drawgamefield(context, program_state);
-        const t = program_state.animation_time / 1000, dt = program_state.animation_delta_time / 1000;
         this.drawgameblocks(context, program_state);
     }
 
@@ -236,13 +244,13 @@ export class blockbussin extends Scene {
         let x = (m[0] | 0) / 2;
         let y = m[1] / 2;
         let z = (m[2] | 0) / 2;
-        return [x,y,z];
+        return [x, y, z];
     }
 
     currCoords() {
         const cur_trans = this.transformations[this.current_block];
-        let curr_coordinates = [];     
-        let temp_matrix = Mat4.identity(); 
+        let curr_coordinates = [];
+        let temp_matrix = Mat4.identity();
         let i = 0;
         for (const element of cur_trans) {
             temp_matrix = this.getBlock(temp_matrix, element)
@@ -256,7 +264,7 @@ export class blockbussin extends Scene {
         let y_drop = 20;
         const curr_coordinates = this.currCoords();
 
-        for (var i=0; i<4; i++) {
+        for (var i = 0; i < 4; i++) {
             let current_array = this.game_blocks[curr_coordinates[i][0]][curr_coordinates[i][2]];
             // TODO: doesn't account for gaps
             // we need to find last index of non neg number + 1
@@ -272,18 +280,98 @@ export class blockbussin extends Scene {
         return y_drop;
     }
 
+    async checkClear() {
+        const range = new Array(10).fill(true);
+        var clearArrayi = range.map(e => range.map(e => e));
+        var clearArrayj = range.map(e => range.map(e => e));
+        //Scanning i,k dimension for any full rows
+        for (var i = 0; i < 10; i++) {
+            for (var k = 0; k < 10; k++) {
+                for (var j = 0; j < 10; j++) {
+                    if (this.game_blocks[i][j][k] == -1) {
+                        clearArrayi[i][k] = false;
+                    }
+                }
+            }
+        }
+
+        //Scanning j,k dimension for any full rows
+        for (var j = 0; j < 10; j++) {
+            for (var k = 0; k < 10; k++) {
+                for (var i = 0; i < 10; i++) {
+                    if (this.game_blocks[i][j][k] == -1) {
+                        clearArrayj[j][k] = false;
+                    }
+                }
+            }
+        }
+
+        //Setting any full rows in the i,k dimension equal to -1, deleting those blocks
+        for (var i = 0; i < 10; i++) {
+            for (var k = 0; k < 10; k++) {
+                if (clearArrayi[i][k]) {
+                    for (var j = 0; j < 10; j++) {
+                        this.game_blocks[i][j][k] = 5;
+                        await new Promise(resolve => setTimeout(resolve, 30));
+                        this.game_blocks[i][j][k] = -1;
+                    }
+                }
+            }
+        }
+        //Setting any full rows in the j,k dimension equal to -1, deleting those blocks
+        for (var j = 0; j < 10; j++) {
+            for (var k = 0; k < 10; k++) {
+                if (clearArrayj[j][k]) {
+                    for (var i = 0; i < 10; i++) {
+                        this.game_blocks[i][j][k] = 5;
+                        await new Promise(resolve => setTimeout(resolve, 30));
+                        this.game_blocks[i][j][k] = -1;
+
+                    }
+                }
+            }
+        }
+        // lowers the rest of the blocks in the row for i, k a level
+        for (var i = 0; i < 10; i++) {
+            for (var k = 0; k < 10; k++) {
+                if (clearArrayi[i][k]) {
+                    for (var j = 0; j < 10; j++) {
+                        for (var x = k; x < 9; x++){
+                            this.game_blocks[i][j][x] = this.game_blocks[i][j][x+1];
+                        }
+                        this.game_blocks[i][j][9] = -1;
+                    }
+                }
+            }
+        }
+        // lowers the rest of the blocks in the row for j, k a level
+        for (var j = 0; j < 10; j++) {
+            for (var k = 0; k < 10; k++) {
+                if (clearArrayj[j][k]) {
+                    for (var i = 0; i < 10; i++) {
+                        for (var x = k; x < 9; x++){
+                            this.game_blocks[i][j][x] = this.game_blocks[i][j][x+1];
+                        }
+                        this.game_blocks[i][j][9] = -1;
+
+                    }
+                }
+            }
+        }
+    }
+
     async dropBlock(y_drop) {
         // in dropping mode
         this.dropping = true;
         const curr_coordinates = this.currCoords();
         // for every unit we drop in y-direction
-        for(var cur_y_drop=0; cur_y_drop<=y_drop; cur_y_drop++) {
+        for (var cur_y_drop = 0; cur_y_drop <= y_drop; cur_y_drop++) {
             // mark dropping block in game_blocks
             for (const n of curr_coordinates) {
                 this.game_blocks[n[0]][n[2]][n[1] - cur_y_drop] = this.current_block;
             }
             // render above block for 200 ms
-            await new Promise(resolve => setTimeout(resolve, 200));
+            await new Promise(resolve => setTimeout(resolve, 50));
             // unmark dropping block in game_blocks
             for (const n of curr_coordinates) {
                 this.game_blocks[n[0]][n[2]][n[1] - cur_y_drop] = -1;
@@ -295,13 +383,17 @@ export class blockbussin extends Scene {
         }
         // exit dropping mode
         this.dropping = false;
+        // if a block is done dropping, then check to see if we have to clear a row
+        if (!this.dropping) {
+            this.checkClear()
+        }
 
-        if(y_drop < 6) {
+        if (y_drop < 6) {
             this.gameOver = true;
         } else {
             this.current_block = null;
             this.current_rotations = Mat4.identity();
-            this.current_translations = Mat4.translation(INIT_X, INIT_Y, INIT_Z); 
+            this.current_translations = Mat4.translation(INIT_X, INIT_Y, INIT_Z);
         }
     }
 
@@ -312,7 +404,7 @@ export class blockbussin extends Scene {
                     if (this.game_blocks[i][j][k] != -1) {
                         let model_transform = Mat4.translation(2 * i, 2 * k, 2 * j);
                         this.shapes.cubeoutline.draw(context, program_state, model_transform, this.white, "LINES");
-                        this.shapes.cube.draw(context, program_state, model_transform, this.materials.cube.override({ color: this.colors[this.game_blocks[i][j][k]]}));
+                        this.shapes.cube.draw(context, program_state, model_transform, this.materials.cube.override({ color: this.colors[this.game_blocks[i][j][k]] }));
                     }
                 }
             }
@@ -382,8 +474,8 @@ export class blockbussin extends Scene {
         var score = document.getElementById("score");
         score.innerHTML = this.score;
         var gameOver = document.getElementById("gameOver");
-        if(this.gameOver) {
-              gameOver.innerHTML = "Game Over. Press (g) to play again";
+        if (this.gameOver) {
+            gameOver.innerHTML = "Game Over. Press (g) to play again";
         } else {
             gameOver.innerHTML = "";
         }
