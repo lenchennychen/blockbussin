@@ -110,7 +110,7 @@ export class blockbussin extends Scene {
         this.dropping = false;
 
         this.last_dropped = 0;
-        this.current_time = 0;
+        this.current_time = 0.0;
 
         this.row_clearing = false;
         // state stores information about the current block type and transformations
@@ -167,7 +167,6 @@ export class blockbussin extends Scene {
         }
         this.displayUI();
         const t = program_state.animation_time / 1000, dt = program_state.animation_delta_time / 1000;
-        this.current_time = t;
         program_state.projection_transform = Mat4.perspective(
             Math.PI / 4, context.width / context.height, .1, 1000);
 
@@ -179,16 +178,21 @@ export class blockbussin extends Scene {
         if (this.current_block == null) {
             this.current_block = Math.floor(Math.random() * 5);
         }
-        // if dropping, set last_dropped to current time
+
         if(this.dropping){
-            this.last_dropped = this.current_time;
+            this.last_dropped = t;
         }
-        // if 
-        if(!this.gameOver && !this.dropping && this.current_time - this.last_dropped > 5){
+
+        if(!this.gameOver && !this.dropping && t - this.last_dropped > 5){
             this.dropBlock(this.yDrop())        
         }
 
-        this.score = this.current_time - this.last_dropped;
+        if (!this.gameOver) {
+            this.current_time = (5 - (t - this.last_dropped)).toFixed(1);
+        } else {
+            this.current_time = 0.0;
+        }
+
         // if the current block is not dropping agnd the game isn't over, display the new current block and it's shadow
         if (!this.dropping && !this.gameOver) {
             const cur_trans = this.transformations[this.current_block];
@@ -531,6 +535,8 @@ export class blockbussin extends Scene {
     displayUI() {
         var score = document.getElementById("score");
         score.innerHTML = this.score;
+        var time = document.getElementById("time");
+        time.innerHTML = this.current_time;
         var gameOver = document.getElementById("gameOver");
         if (this.gameOver) {
             gameOver.innerHTML = "Game Over. Press (g) to play again";
@@ -548,6 +554,9 @@ export class blockbussin extends Scene {
 
         // set score to 0
         this.score = 0;
+
+        // set current time to 0.0;
+        this.current_time = 0.0;
 
         // state stores information about the current block type and transformations
         this.current_block = null;
