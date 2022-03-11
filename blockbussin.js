@@ -253,7 +253,8 @@ export class blockbussin extends Scene {
         for (const element of cur_trans) {
             model_transform = this.getBlock(model_transform, element);
             let m = Matrix.flatten_2D_to_1D(model_transform);
-            if (m[3] > 18 || m[11] < 0 || m[3] < 0 || m[11] > 18) {
+            console.log(m[3], m[11])
+            if (m[3] > 19 || m[11] < -1 || m[3] < -1 || m[11] > 19) {
                 return false;
             }
         }
@@ -293,8 +294,6 @@ export class blockbussin extends Scene {
 
         for (var i = 0; i < 4; i++) {
             let current_array = this.game_blocks[curr_coordinates[i][0]][curr_coordinates[i][2]];
-            // TODO: doesn't account for gaps
-            // we need to find last index of non neg number + 1
             let new_y = 9;
             while (current_array[new_y] === -1) {
                 new_y--;
