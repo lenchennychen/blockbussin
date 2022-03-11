@@ -262,7 +262,6 @@ export class blockbussin extends Scene {
         for (const element of cur_trans) {
             model_transform = this.getBlock(model_transform, element);
             let m = Matrix.flatten_2D_to_1D(model_transform);
-            console.log(m[3], m[11])
             if (m[3] > 19 || m[11] < -1 || m[3] < -1 || m[11] > 19) {
                 return false;
             }
