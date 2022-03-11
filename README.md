@@ -16,4 +16,4 @@ https://www.retrogames.cz/manualy/NES/Tetris_(Nintendo)_-_NES_-_Manual.pdf
   
 - Drop Block: SPACE
 - Restart: 'g'
-- Camera Movement: '1' (front) '2' (left) '3' (rear) '4' (right)
+- Camera Movement: '1' (front) '2' (left) '3' (rear) '4' (right) 'q' (forward) 'w' (backward) 'e' (left) 'r' (right) 't' (up) 'y' (down). You can also drag the screen to move the camera.
