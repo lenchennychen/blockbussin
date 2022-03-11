@@ -879,17 +879,17 @@ const Movement_Controls = defs.Movement_Controls =
             this.new_line();
             this.new_line();
 
-            this.key_triggered_button("Up", ["q"], () => this.thrust[1] = -1, undefined, () => this.thrust[1] = 0);
-            this.key_triggered_button("Forward", ["w"], () => this.thrust[2] = 1, undefined, () => this.thrust[2] = 0);
+            this.key_triggered_button("Forward", ["q"], () => this.thrust[2] = 1, undefined, () => this.thrust[2] = 0);
+            this.key_triggered_button("Backward", ["w"], () => this.thrust[2] = -1, undefined, () => this.thrust[2] = 0);
             this.new_line();
             this.key_triggered_button("Left", ["e"], () => this.thrust[0] = 1, undefined, () => this.thrust[0] = 0);
-            this.key_triggered_button("Back", ["r"], () => this.thrust[2] = -1, undefined, () => this.thrust[2] = 0);
-            this.key_triggered_button("Right", ["t"], () => this.thrust[0] = -1, undefined, () => this.thrust[0] = 0);
+            this.key_triggered_button("Right", ["r"], () => this.thrust[0] = -1, undefined, () => this.thrust[0] = 0);
             this.new_line();
+            this.key_triggered_button("Up", ["t"], () => this.thrust[1] = -1, undefined, () => this.thrust[1] = 0);
             this.key_triggered_button("Down", ["y"], () => this.thrust[1] = 1, undefined, () => this.thrust[1] = 0);
 
-            const speed_controls = this.control_panel.appendChild(document.createElement("span"));
-            speed_controls.style.margin = "30px";
+            // const speed_controls = this.control_panel.appendChild(document.createElement("span"));
+            //speed_controls.style.margin = "30px";
             // this.key_triggered_button("-", ["o"], () =>
             //     this.speed_multiplier /= 1.2, undefined, undefined, undefined, speed_controls);
             // this.live_string(box => {
