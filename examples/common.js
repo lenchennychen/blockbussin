@@ -914,7 +914,7 @@ const Movement_Controls = defs.Movement_Controls =
                 this.matrix().set(Mat4.inverse(this.inverse()));
             }, "#8B8885");
             this.new_line();
-            this.key_triggered_button("from right", ["2"], () => {
+            this.key_triggered_button("from left", ["2"], () => {
                 this.inverse().set(Mat4.look_at(vec3(-30, 50, 50), vec3(20, 0, 0), vec3(0, 1, 0)));
                 this.matrix().set(Mat4.inverse(this.inverse()));
             }, "#8B8885");
@@ -922,7 +922,7 @@ const Movement_Controls = defs.Movement_Controls =
                 this.inverse().set(Mat4.look_at(vec3(-30, 50, -30), vec3(20, 0, 20), vec3(0, 1, 0)));
                 this.matrix().set(Mat4.inverse(this.inverse()));
             }, "#8B8885");
-            this.key_triggered_button("from left", ["4"], () => {
+            this.key_triggered_button("from right", ["4"], () => {
                 this.inverse().set(Mat4.look_at(vec3(50, 50, -30), vec3(0, 0, 20), vec3(0, 1, 0)));
                 this.matrix().set(Mat4.inverse(this.inverse()));
             }, "#8B8885");

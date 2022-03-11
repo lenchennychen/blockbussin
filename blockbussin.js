@@ -146,13 +146,13 @@ export class blockbussin extends Scene {
             this.draw_walls = [true,true,false,false];
         }, "#8B8885");
         this.new_line();
-        this.key_triggered_button("from right", ["2"], () => {
+        this.key_triggered_button("from left", ["2"], () => {
             this.draw_walls = [false,true,true,false];
         }, "#8B8885");
         this.key_triggered_button("from rear", ["3"], () => {
             this.draw_walls = [false,false,true,true];
         }, "#8B8885");
-        this.key_triggered_button("from left", ["4"], () => {
+        this.key_triggered_button("from right", ["4"], () => {
             this.draw_walls = [true,false,false,true];
         }, "#8B8885");
     }
