@@ -109,6 +109,7 @@ export class blockbussin extends Scene {
         // set block currently dropping to false
         this.dropping = false;
 
+        this.restartbool = false;
         this.last_dropped = 0;
         this.current_time = 0.0;
 
@@ -181,6 +182,10 @@ export class blockbussin extends Scene {
 
         if(this.dropping){
             this.last_dropped = t;
+        }
+        if(this.restartbool){
+            this.last_dropped = t;
+            this.restartbool = false;
         }
 
         if(!this.gameOver && !this.dropping && t - this.last_dropped > 5){
@@ -556,7 +561,8 @@ export class blockbussin extends Scene {
         this.score = 0;
 
         // set current time to 0.0;
-        this.current_time = 0.0;
+        // this.current_time = 0.0;
+        this.restartbool = true;
 
         // state stores information about the current block type and transformations
         this.current_block = null;
