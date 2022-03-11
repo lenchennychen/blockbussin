@@ -109,6 +109,9 @@ export class blockbussin extends Scene {
         // set block currently dropping to false
         this.dropping = false;
 
+        this.last_dropped = 0;
+        this.current_time = 0;
+
         this.row_clearing = false;
         // state stores information about the current block type and transformations
         this.current_block = null;
@@ -135,7 +138,7 @@ export class blockbussin extends Scene {
         // forward = away
         this.key_triggered_button("Translate forward", ["i"], () => { if (!this.dropping) { this.checkMove('i') } });
         this.key_triggered_button("Translate backward", ["k"], () => { if (!this.dropping) { this.checkMove('k') } });
-        this.key_triggered_button("Drop Block", [" "], () => { if (!this.gameOver && !this.dropping) { this.dropBlock(this.yDrop()) } });
+        this.key_triggered_button("Drop Block", [" "], () => { if (!this.gameOver && !this.dropping) { this.dropBlock(this.yDrop())} });
         this.key_triggered_button("Restart", ["g"], () => this.restart());
         //draw choice walls depending on camera angle also modified in common.js
         this.key_triggered_button("Look at origin from front", ["1"], () => {
@@ -164,7 +167,7 @@ export class blockbussin extends Scene {
         }
         this.displayUI();
         const t = program_state.animation_time / 1000, dt = program_state.animation_delta_time / 1000;
-
+        this.current_time = t;
         program_state.projection_transform = Mat4.perspective(
             Math.PI / 4, context.width / context.height, .1, 1000);
 
@@ -176,8 +179,17 @@ export class blockbussin extends Scene {
         if (this.current_block == null) {
             this.current_block = Math.floor(Math.random() * 5);
         }
+        // if dropping, set last_dropped to current time
+        if(this.dropping){
+            this.last_dropped = this.current_time;
+        }
+        // if 
+        if(!this.gameOver && !this.dropping && this.current_time - this.last_dropped > 5){
+            this.dropBlock(this.yDrop())        
+        }
 
-        // if the current block is not dropping and the game isn't over, display the new current block and it's shadow
+        this.score = this.current_time - this.last_dropped;
+        // if the current block is not dropping agnd the game isn't over, display the new current block and it's shadow
         if (!this.dropping && !this.gameOver) {
             const cur_trans = this.transformations[this.current_block];
             const y_drop = this.yDrop();
