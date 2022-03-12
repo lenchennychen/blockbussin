@@ -1,4 +1,4 @@
-import { defs, tiny } from './examples/common.js';
+import { defs, tiny } from './common.js';
 
 const {
     Vector, Vector3, vec, vec3, vec4, color, hex_color, Shader, Matrix, Mat4, Light, Shape, Material, Scene, Cube
@@ -161,7 +161,6 @@ export class blockbussin extends Scene {
         // display():  Called once per frame of animation.
         // Setup -- This part sets up the scene's overall camera matrix, projection matrix, and lights:
         if (!context.scratchpad.controls) {
-            // don't uncomment camera controls until key overlap issue is fixed (TODO)
             this.children.push(context.scratchpad.controls = new defs.Movement_Controls());
             // Define the global camera and projection matrices, which are stored in program_state.
             program_state.set_camera(this.initial_camera_location);
